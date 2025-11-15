@@ -22,7 +22,7 @@ java {
 }
 
 application {
-    mainClass = 'org.example.App'
+    mainClass = 'lv.taukulis.MicroGit'
 }
 
 tasks.named('test') {
