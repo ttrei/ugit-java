@@ -19,20 +19,25 @@ public class Data {
         System.out.println("Initialized empty ugit repository at " + ugitPath.toAbsolutePath());
     }
 
-    public static void hashObject(Path file) throws IOException {
+    public static String hashObject(Path file) throws IOException {
         try {
-            hashObject(file, "SHA-1");
+            return hashObject(file, "SHA-1");
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-1 algorithm not available", e);
         }
     }
 
-    public static void hashObject(Path file, String algorithm) throws NoSuchAlgorithmException, IOException {
+    public static String hashObject(Path file, String algorithm) throws NoSuchAlgorithmException, IOException {
         byte[] data = Files.readAllBytes(file);
         MessageDigest md = MessageDigest.getInstance(algorithm);
         String objectId = Utils.bytesToHex(md.digest(data));
         Path objectPath = Paths.get(GIT_DIR, "objects", objectId);
         Files.write(objectPath, data);
+        return objectId;
+    }
+
+    public static String getObject(String objectId) throws IOException {
+        return Files.readString(Paths.get(GIT_DIR, "objects", objectId));
     }
 
 }

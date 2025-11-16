@@ -7,13 +7,11 @@ import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Spec;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 @Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {InitCommand.class, HashObjectCommand.class,
-        CommandLine.HelpCommand.class})
+        CatFilesCommand.class, CommandLine.HelpCommand.class})
 public class MicroGit {
     @SuppressWarnings("unused")
     @Spec
@@ -39,14 +37,26 @@ class InitCommand implements Callable<Integer> {
 @Command(name = "hash-object", mixinStandardHelpOptions = true)
 class HashObjectCommand implements Callable<Integer> {
 
-    @Parameters(arity = "1..*", description = "Files to hash")
-    List<Path> files;
+    @Parameters(arity = "1", description = "File to hash")
+    Path file;
 
     @Override
     public Integer call() throws IOException {
-        for (Path file : files) {
-            Data.hashObject(file);
-        }
+        System.out.println(Data.hashObject(file));
+        return 0;
+    }
+
+}
+
+@Command(name = "cat-file", mixinStandardHelpOptions = true)
+class CatFilesCommand implements Callable<Integer> {
+
+    @Parameters(arity = "1", description = "Object ID")
+    String objectId;
+
+    @Override
+    public Integer call() throws IOException {
+        System.out.println(Data.getObject(objectId));
         return 0;
     }
 
