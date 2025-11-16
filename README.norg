@@ -4,7 +4,9 @@
 
 ** Java Libraries
 
-   CLI: https://picocli.info/quick-guide.html
+   CLI:
+   https://picocli.info/quick-guide.html
+   NOTE: Don't use GraalVM - it's complicated to setup and compliation is slow.
 
 ** Current chapter
 
