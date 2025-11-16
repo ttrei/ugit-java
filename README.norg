@@ -2,16 +2,6 @@
 
   https://www.leshenko.net/p/ugit
 
-** Current chapter
-
-   https://www.leshenko.net/p/ugit/#cat-file
-
-** TODO (nice to have)
-
-   - Proper error presentation for cli user.
-     Now all errors bubble up to the cli commands, leading to stack trace in case of error.
-     Relevant documentation: https://picocli.info/#execute
-
 ** Java Libraries
 
    CLI:

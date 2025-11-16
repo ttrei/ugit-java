@@ -1,0 +1,13 @@
+* ugit implemented in Java
+
+  https://www.leshenko.net/p/ugit
+
+** Current chapter
+
+   https://www.leshenko.net/p/ugit/#cat-file
+
+** (nice to have) Proper error presentation for cli user
+
+   Currently all errors bubble up to the cli commands, leading to stack trace in case of error.
+   Relevant documentation:
+   https://picocli.info/#execute
