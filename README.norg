@@ -8,6 +8,12 @@
    https://picocli.info/quick-guide.html
    NOTE: Don't use GraalVM - it's complicated to setup and compliation is slow.
 
+** TODO (nice to have)
+
+   - Proper error presentation for cli user.
+     Now all errors bubble up to the cli commands, leading to stack trace in case of error.
+     Relevant documentation: https://picocli.info/#execute
+
 ** Current chapter
 
    https://www.leshenko.net/p/ugit/#hash-object
