@@ -56,7 +56,8 @@ class CatFilesCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        System.out.println(Data.getObject(objectId));
+        System.out.write(Data.getObject(objectId, null));
+        System.out.flush();
         return 0;
     }
 
