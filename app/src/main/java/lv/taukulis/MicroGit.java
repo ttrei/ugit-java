@@ -10,8 +10,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
-@Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {InitCommand.class, HashObjectCommand.class,
-        CatFilesCommand.class, CommandLine.HelpCommand.class})
+@Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class,
+        InitCommand.class, HashObjectCommand.class, CatFilesCommand.class, WriteTreeCommand.class})
 public class MicroGit {
     @SuppressWarnings("unused")
     @Spec
@@ -58,6 +58,18 @@ class CatFilesCommand implements Callable<Integer> {
     public Integer call() throws IOException {
         System.out.write(Data.getObject(objectId, null));
         System.out.flush();
+        return 0;
+    }
+
+}
+
+
+@Command(name = "write-tree", mixinStandardHelpOptions = true)
+class WriteTreeCommand implements Callable<Integer> {
+
+    @Override
+    public Integer call() throws IOException {
+        Base.writeTree();
         return 0;
     }
 
