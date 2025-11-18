@@ -24,11 +24,11 @@ public class Data {
         System.out.println("Initialized empty ugit repository at " + ugitPath.toAbsolutePath());
     }
 
-    public static String hashObject(Path file) throws IOException {
-        return hashObject(file, "blob");
+    public static String hashObject(byte[] dataBytes) throws IOException {
+        return hashObject(dataBytes, "blob");
     }
 
-    public static String hashObject(Path file, String type) throws IOException {
+    public static String hashObject(byte[] dataBytes, String type) throws IOException {
         MessageDigest md;
         try {
             md = MessageDigest.getInstance("SHA-1");
@@ -37,7 +37,6 @@ public class Data {
         }
 
         byte[] typeBytes = type.getBytes(StandardCharsets.UTF_8);
-        byte[] dataBytes = Files.readAllBytes(file);
         ByteBuffer typeAndDataBuffer = ByteBuffer.allocate(typeBytes.length + 1 + dataBytes.length);
         typeAndDataBuffer.put(typeBytes);
         typeAndDataBuffer.put(NULL_BYTE);

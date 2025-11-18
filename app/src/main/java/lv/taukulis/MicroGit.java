@@ -7,6 +7,7 @@ import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Spec;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
@@ -42,7 +43,7 @@ class HashObjectCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        System.out.println(Data.hashObject(file));
+        System.out.println(Data.hashObject(Files.readAllBytes(file)));
         return 0;
     }
 
