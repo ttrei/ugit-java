@@ -4,7 +4,13 @@
 
 ** Current chapter
 
-   https://www.leshenko.net/p/ugit/#add-base-module
+   https://www.leshenko.net/p/ugit/#write-tree-create-tree-obj
+
+   TODO: Why do we write blob+NULL_BYTE here?
+   @code .ugit/objects/01aecc186ba1c943107949b7311627536705c19c
+   blob@tree a898f0134aa9a597924e49670fd806ccc2a0908c test
+   tree e21b28be91746bd4ba6f667351fff9d288e8f34e main
+   @end
 
 ** (nice to have) Proper error presentation for cli user
 
