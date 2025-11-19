@@ -70,7 +70,7 @@ class WriteTreeCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        Base.writeTree();
+        System.out.println(Base.writeTree());
         return 0;
     }
 

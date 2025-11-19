@@ -12,22 +12,24 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.StreamSupport;
 
 public class Base {
 
     private static final String UGIT_DIR = ".ugit";
 
-    public static void writeTree() throws IOException {
-        writeTree(".");
+    public static String writeTree() throws IOException {
+        return writeTree(".");
     }
 
-    public static void writeTree(String directory) throws IOException {
+    public static String writeTree(String directory) throws IOException {
         Path path = Paths.get(directory);
         if (!Files.isDirectory(path)) {
             throw new IOException("write-tree called on non-directory");
         }
         Map<Path, List<Entry>> entries = new HashMap<>();
+        AtomicReference<String> rootObjectId = new AtomicReference<>();
 
         Files.walkFileTree(path, new SimpleFileVisitor<>() {
             @Override
@@ -44,8 +46,8 @@ public class Base {
                 if (isIgnored(file)) {
                     return FileVisitResult.CONTINUE;
                 }
-                var entry = new Entry("blob", Data.hashObject(Files.readAllBytes(file)), file.getFileName().toString());
-                entries.get(file.getParent()).add(entry);
+                String objectId = Data.hashObject(Files.readAllBytes(file));
+                entries.get(file.getParent()).add(new Entry("blob", objectId, file.getFileName().toString()));
                 return FileVisitResult.CONTINUE;
             }
 
@@ -54,20 +56,27 @@ public class Base {
                 if (exc != null) {
                     throw exc;
                 }
-                StringBuilder sb = new StringBuilder();
-                for (var entry : entries.get(dir)) {
-                    sb.append(entry);
-                    sb.append("\n");
-                }
-                String objectId = Data.hashObject(sb.toString().getBytes(StandardCharsets.UTF_8));
-                Entry entry = new Entry("tree", objectId, dir.getFileName().toString());
+                String objectId = Data.hashObject(buildTree(entries.get(dir)).getBytes(StandardCharsets.UTF_8));
                 Path parent = dir.getParent();
-                if (parent != null) {
-                    entries.get(parent).add(entry);
+                if (parent != null && entries.containsKey(parent)) {
+                    entries.get(parent).add(new Entry("tree", objectId, dir.getFileName().toString()));
+                } else {
+                    rootObjectId.set(objectId);
                 }
                 return FileVisitResult.CONTINUE;
             }
         });
+
+        return rootObjectId.get();
+    }
+
+    private static String buildTree(List<Entry> entries) {
+        StringBuilder sb = new StringBuilder();
+        for (Entry entry : entries) {
+            sb.append(entry);
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 
     private static boolean isIgnored(Path path) {
