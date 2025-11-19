@@ -6,4 +6,4 @@
 
    CLI:
    https://picocli.info/quick-guide.html
-   NOTE: Don't use GraalVM - it's complicated to setup and compliation is slow.
+   NOTE: Don't use GraalVM - it's complicated to setup and compilation is slow.
