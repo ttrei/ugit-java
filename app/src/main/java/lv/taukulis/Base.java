@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +57,7 @@ public class Base {
                 if (exc != null) {
                     throw exc;
                 }
-                String objectId = Data.hashObject(buildTree(entries.get(dir)).getBytes(StandardCharsets.UTF_8));
+                String objectId = Data.hashObject(buildTree(entries.remove(dir)).getBytes(StandardCharsets.UTF_8));
                 Path parent = dir.getParent();
                 if (parent != null && entries.containsKey(parent)) {
                     entries.get(parent).add(new Entry("tree", objectId, dir.getFileName().toString()));
@@ -72,10 +73,7 @@ public class Base {
 
     private static String buildTree(List<Entry> entries) {
         StringBuilder sb = new StringBuilder();
-        for (Entry entry : entries) {
-            sb.append(entry);
-            sb.append("\n");
-        }
+        entries.stream().sorted(Comparator.comparing(Entry::type).thenComparing(Entry::name)).forEach(entry -> sb.append(entry).append("\n"));
         return sb.toString();
     }
 
