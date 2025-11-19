@@ -16,19 +16,19 @@ public class Data {
 
     private static final byte NULL_BYTE = 0x00;
 
-    public static void init() throws IOException {
-        Path ugitPath = Paths.get(GIT_DIR);
-        Path objectsPath = Paths.get(GIT_DIR, "objects");
+    public static void init(Path root) throws IOException {
+        Path ugitPath = root.resolve(GIT_DIR);
+        Path objectsPath = ugitPath.resolve("objects");
         Files.createDirectory(ugitPath);
         Files.createDirectory(objectsPath);
         System.out.println("Initialized empty ugit repository at " + ugitPath.toAbsolutePath());
     }
 
-    public static String hashObject(byte[] dataBytes) throws IOException {
-        return hashObject(dataBytes, "blob");
+    public static String hashObject(Path root, byte[] dataBytes) throws IOException {
+        return hashObject(root, dataBytes, "blob");
     }
 
-    public static String hashObject(byte[] dataBytes, String type) throws IOException {
+    public static String hashObject(Path root, byte[] dataBytes, String type) throws IOException {
         MessageDigest md;
         try {
             md = MessageDigest.getInstance("SHA-1");
@@ -44,17 +44,18 @@ public class Data {
         byte[] typeAndDataBytes = typeAndDataBuffer.array();
 
         String objectId = Utils.bytesToHex(md.digest(typeAndDataBytes));
-        Path objectPath = Paths.get(GIT_DIR, "objects", objectId);
+        Path objectPath = root.resolve(Paths.get(GIT_DIR, "objects", objectId));
         Files.write(objectPath, typeAndDataBytes);
         return objectId;
     }
 
-    public static byte[] getObject(String objectId) throws IOException {
-        return getObject(objectId, "blob");
+    @SuppressWarnings("unused")
+    public static byte[] getObject(Path root, String objectId) throws IOException {
+        return getObject(root, objectId, "blob");
     }
 
-    public static byte[] getObject(String objectId, String expectedType) throws IOException {
-        byte[] objectBytes = Files.readAllBytes(Paths.get(GIT_DIR, "objects", objectId));
+    public static byte[] getObject(Path root, String objectId, String expectedType) throws IOException {
+        byte[] objectBytes = Files.readAllBytes(root.resolve(Paths.get(GIT_DIR, "objects", objectId)));
 
         int separatorIndex = -1;
         for (int i = 0; i < objectBytes.length; i++) {

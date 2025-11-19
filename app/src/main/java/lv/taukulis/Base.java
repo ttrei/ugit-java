@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -18,14 +17,10 @@ import java.util.stream.StreamSupport;
 
 public class Base {
 
-    private static final String UGIT_DIR = ".ugit";
+    private static final String GIT_DIR = ".ugit";
 
-    public static String writeTree() throws IOException {
-        return writeTree(".");
-    }
-
-    public static String writeTree(String directory) throws IOException {
-        Path path = Paths.get(directory);
+    public static String writeTree(Path root, String directory) throws IOException {
+        Path path = root.resolve(directory);
         if (!Files.isDirectory(path)) {
             throw new IOException("write-tree called on non-directory");
         }
@@ -47,7 +42,7 @@ public class Base {
                 if (isIgnored(file)) {
                     return FileVisitResult.CONTINUE;
                 }
-                String objectId = Data.hashObject(Files.readAllBytes(file));
+                String objectId = Data.hashObject(root, Files.readAllBytes(file));
                 entries.get(file.getParent()).add(new Entry("blob", objectId, file.getFileName().toString()));
                 return FileVisitResult.CONTINUE;
             }
@@ -57,7 +52,8 @@ public class Base {
                 if (exc != null) {
                     throw exc;
                 }
-                String objectId = Data.hashObject(buildTree(entries.remove(dir)).getBytes(StandardCharsets.UTF_8));
+String objectId = Data.hashObject(root,
+                        buildTree(entries.remove(dir)).getBytes(StandardCharsets.UTF_8));
                 Path parent = dir.getParent();
                 if (parent != null && entries.containsKey(parent)) {
                     entries.get(parent).add(new Entry("tree", objectId, dir.getFileName().toString()));
@@ -78,7 +74,7 @@ public class Base {
     }
 
     private static boolean isIgnored(Path path) {
-        return StreamSupport.stream(path.spliterator(), true).anyMatch(p -> p.toString().equals(UGIT_DIR));
+        return StreamSupport.stream(path.spliterator(), true).anyMatch(p -> p.toString().equals(GIT_DIR));
     }
 
     private record Entry(String type, String objectId, String name) {
