@@ -52,7 +52,7 @@ public class Base {
                 if (exc != null) {
                     throw exc;
                 }
-String objectId = Data.hashObject(root,
+                String objectId = Data.hashObject(root,
                         buildTree(entries.remove(dir)).getBytes(StandardCharsets.UTF_8));
                 Path parent = dir.getParent();
                 if (parent != null && entries.containsKey(parent)) {
