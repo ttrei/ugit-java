@@ -15,7 +15,8 @@ import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 @Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class,
-        InitCommand.class, HashObjectCommand.class, CatFilesCommand.class, WriteTreeCommand.class})
+        InitCommand.class, HashObjectCommand.class, CatFilesCommand.class, WriteTreeCommand.class,
+        ReadTreeCommand.class})
 public class MicroGit {
     @SuppressWarnings("unused")
     @Spec
@@ -89,6 +90,22 @@ class WriteTreeCommand implements Callable<Integer> {
     @Override
     public Integer call() throws IOException {
         System.out.println(Base.writeTree(parent.getRoot(), ""));
+        return 0;
+    }
+}
+
+@Command(name = "read-tree", mixinStandardHelpOptions = true)
+class ReadTreeCommand implements Callable<Integer> {
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private MicroGit parent;
+
+    @Parameters(arity = "1", description = "Object ID of a tree")
+    String treeObjectId;
+
+    @Override
+    public Integer call() throws IOException {
+        Base.readTree(parent.getRoot(), treeObjectId);
         return 0;
     }
 }

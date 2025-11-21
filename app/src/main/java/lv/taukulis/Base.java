@@ -24,7 +24,7 @@ public class Base {
         if (!Files.isDirectory(path)) {
             throw new IOException("write-tree called on non-directory");
         }
-        Map<Path, List<Entry>> entries = new HashMap<>();
+        Map<Path, List<TreeEntry>> entries = new HashMap<>();
         AtomicReference<String> rootObjectId = new AtomicReference<>();
 
         Files.walkFileTree(path, new SimpleFileVisitor<>() {
@@ -43,7 +43,7 @@ public class Base {
                     return FileVisitResult.CONTINUE;
                 }
                 String objectId = Data.hashObject(root, Files.readAllBytes(file));
-                entries.get(file.getParent()).add(new Entry("blob", objectId, file.getFileName().toString()));
+                entries.get(file.getParent()).add(new TreeEntry("blob", objectId, file.getFileName()));
                 return FileVisitResult.CONTINUE;
             }
 
@@ -53,10 +53,10 @@ public class Base {
                     throw exc;
                 }
                 String objectId = Data.hashObject(root,
-                        buildTree(entries.remove(dir)).getBytes(StandardCharsets.UTF_8));
+                        buildTreeString(entries.remove(dir)).getBytes(StandardCharsets.UTF_8));
                 Path parent = dir.getParent();
                 if (parent != null && entries.containsKey(parent)) {
-                    entries.get(parent).add(new Entry("tree", objectId, dir.getFileName().toString()));
+                    entries.get(parent).add(new TreeEntry("tree", objectId, dir.getFileName()));
                 } else {
                     rootObjectId.set(objectId);
                 }
@@ -67,9 +67,32 @@ public class Base {
         return rootObjectId.get();
     }
 
-    private static String buildTree(List<Entry> entries) {
+    public static void readTree(Path root, String treeObjectId) throws IOException {
+        List<TreeEntry> entries = new ArrayList<>();
+        parseTree(root, new TreeEntry("tree", treeObjectId, root), entries);
+        for (TreeEntry entry : entries) {
+            Files.createDirectories(entry.path.getParent());
+            Files.write(entry.path, Data.getObject(root, entry.objectId));
+        }
+    }
+
+    private static void parseTree(Path root, TreeEntry tree, List<TreeEntry> entries) throws IOException {
+        var treeString = new String(Data.getObject(root, tree.objectId), StandardCharsets.UTF_8);
+        for (String entryString : treeString.split("\n")) {
+            var entry = TreeEntry.fromStringRelativeToPath(entryString, tree.path);
+            if ("blob".equals(entry.type)) {
+                entries.add(entry);
+            } else if ("tree".equals(entry.type)) {
+                parseTree(root, entry, entries);
+            } else {
+                throw new RuntimeException(String.format("Unexpected tree entry type '%s'", entry.type));
+            }
+        }
+    }
+
+    private static String buildTreeString(List<TreeEntry> entries) {
         StringBuilder sb = new StringBuilder();
-        entries.stream().sorted(Comparator.comparing(Entry::type).thenComparing(Entry::name)).forEach(entry -> sb.append(entry).append("\n"));
+        entries.stream().sorted(Comparator.comparing(TreeEntry::type).thenComparing(TreeEntry::path)).forEach(entry -> sb.append(entry).append("\n"));
         return sb.toString();
     }
 
@@ -77,10 +100,18 @@ public class Base {
         return StreamSupport.stream(path.spliterator(), true).anyMatch(p -> p.toString().equals(GIT_DIR));
     }
 
-    private record Entry(String type, String objectId, String name) {
+    private record TreeEntry(String type, String objectId, Path path) {
         @Override
         public String toString() {
-            return type + " " + objectId + " " + name;
+            return type + " " + objectId + " " + path;
+        }
+
+        public static TreeEntry fromStringRelativeToPath(String entry, Path baseDir) {
+            String[] parts = entry.split(" ", 3);
+            if (parts.length < 3) {
+                throw new RuntimeException(String.format("Invalid tree entry: '%s'", entry));
+            }
+            return new TreeEntry(parts[0], parts[1], baseDir.resolve(parts[2]));
         }
     }
 
