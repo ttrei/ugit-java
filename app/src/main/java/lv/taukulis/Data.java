@@ -24,10 +24,6 @@ public class Data {
         System.out.println("Initialized empty ugit repository at " + ugitPath.toAbsolutePath());
     }
 
-    public static String hashObject(Path root, byte[] dataBytes) throws IOException {
-        return hashObject(root, dataBytes, "blob");
-    }
-
     public static String hashObject(Path root, byte[] dataBytes, String type) throws IOException {
         MessageDigest md;
         try {
@@ -36,7 +32,7 @@ public class Data {
             throw new RuntimeException("SHA-1 algorithm not available", e);
         }
 
-        byte[] typeBytes = type.getBytes(StandardCharsets.UTF_8);
+        byte[] typeBytes = type.getBytes();
         ByteBuffer typeAndDataBuffer = ByteBuffer.allocate(typeBytes.length + 1 + dataBytes.length);
         typeAndDataBuffer.put(typeBytes);
         typeAndDataBuffer.put(NULL_BYTE);

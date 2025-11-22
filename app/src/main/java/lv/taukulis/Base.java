@@ -47,7 +47,7 @@ public class Base {
                 if (isIgnored(file)) {
                     return FileVisitResult.CONTINUE;
                 }
-                String objectId = Data.hashObject(root, Files.readAllBytes(file));
+                String objectId = Data.hashObject(root, Files.readAllBytes(file), "blob");
                 entries.get(file.getParent()).add(new TreeEntry("blob", objectId, file.getFileName()));
                 return FileVisitResult.CONTINUE;
             }
@@ -57,13 +57,17 @@ public class Base {
                 if (exc != null) {
                     throw exc;
                 }
-                String objectId = Data.hashObject(root,
-                        buildTreeString(entries.remove(dir)).getBytes(StandardCharsets.UTF_8));
+                List<TreeEntry> dirEntries = entries.remove(dir);
+                if (dirEntries.isEmpty()) {
+                    // Don't track empty directories.
+                    return FileVisitResult.CONTINUE;
+                }
+                String treeObjectId = Data.hashObject(root, buildTreeString(dirEntries).getBytes(), "tree");
                 Path parent = dir.getParent();
                 if (parent != null && entries.containsKey(parent)) {
-                    entries.get(parent).add(new TreeEntry("tree", objectId, dir.getFileName()));
+                    entries.get(parent).add(new TreeEntry("tree", treeObjectId, dir.getFileName()));
                 } else {
-                    rootObjectId.set(objectId);
+                    rootObjectId.set(treeObjectId);
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -82,6 +86,12 @@ public class Base {
             Files.createDirectories(entry.path.getParent());
             Files.write(entry.path, Data.getObject(root, entry.objectId));
         }
+    }
+
+    public static String commit(Path root, String message) throws IOException {
+        String objectId = writeTree(root, "");
+        String commitString = "tree " + objectId + "\n\n" + message + "\n";
+        return Data.hashObject(root, commitString.getBytes(), "commit");
     }
 
     /**
@@ -117,7 +127,7 @@ public class Base {
             throw new RuntimeException(String.format("Expected 'tree' object, got '%s' (%s)", tree.type,
                     tree.objectId));
         }
-        var treeString = new String(Data.getObject(root, tree.objectId), StandardCharsets.UTF_8);
+        var treeString = new String(Data.getObject(root, tree.objectId, "tree"), StandardCharsets.UTF_8);
         return Arrays.stream(treeString.split("\n"))
                 .map(entryString -> TreeEntry.fromStringRelativeToPath(entryString, tree.path))
                 .toList();

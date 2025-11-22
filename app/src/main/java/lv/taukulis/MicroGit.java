@@ -16,7 +16,7 @@ import java.util.concurrent.Callable;
 
 @Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class,
         InitCommand.class, HashObjectCommand.class, CatFilesCommand.class, WriteTreeCommand.class,
-        ReadTreeCommand.class})
+        ReadTreeCommand.class, CommitCommand.class})
 public class MicroGit {
     @SuppressWarnings("unused")
     @Spec
@@ -59,7 +59,7 @@ class HashObjectCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        System.out.println(Data.hashObject(parent.getRoot(), Files.readAllBytes(file)));
+        System.out.println(Data.hashObject(parent.getRoot(), Files.readAllBytes(file), "blob"));
         return 0;
     }
 }
@@ -106,6 +106,22 @@ class ReadTreeCommand implements Callable<Integer> {
     @Override
     public Integer call() throws IOException {
         Base.readTree(parent.getRoot(), treeObjectId);
+        return 0;
+    }
+}
+
+@Command(name = "commit", mixinStandardHelpOptions = true)
+class CommitCommand implements Callable<Integer> {
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private MicroGit parent;
+
+    @Parameters(arity = "1..*", description = "Commit message")
+    String[] messageArgs;
+
+    @Override
+    public Integer call() throws IOException {
+        System.out.println(Base.commit(parent.getRoot(), String.join(" ", messageArgs)));
         return 0;
     }
 }
