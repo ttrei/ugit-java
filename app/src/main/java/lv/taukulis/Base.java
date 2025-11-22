@@ -2,16 +2,21 @@ package lv.taukulis;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.StreamSupport;
 
@@ -68,22 +73,62 @@ public class Base {
     }
 
     public static void readTree(Path root, String treeObjectId) throws IOException {
+        var tree = new TreeEntry("tree", treeObjectId, root);
         List<TreeEntry> entries = new ArrayList<>();
-        parseTree(root, new TreeEntry("tree", treeObjectId, root), entries);
+        gatherTreeEntries(root, tree, entries);
+        // TODO: Remove the current tree instead (when pointer to current tree implemented).
+        unreadTree(root, tree);
         for (TreeEntry entry : entries) {
             Files.createDirectories(entry.path.getParent());
             Files.write(entry.path, Data.getObject(root, entry.objectId));
         }
     }
 
-    private static void parseTree(Path root, TreeEntry tree, List<TreeEntry> entries) throws IOException {
+    /**
+     * Remove files of given tree from filesystem.
+     * Keep untracked files/directories.
+     */
+    private static void unreadTree(Path root, TreeEntry tree) throws IOException {
+        List<TreeEntry> entries = new ArrayList<>();
+        gatherTreeEntries(root, tree, entries);
+        Set<Path> directories = new HashSet<>();
+        // Remove files.
+        for (TreeEntry entry : entries) {
+            try {
+                Files.delete(entry.path);
+            } catch (NoSuchFileException ignored) {
+            }
+            directories.add(entry.path.getParent());
+        }
+        directories.remove(root);
+        // Remove directories deepest-first to remove as much as we can, given there may be untracked files in the tree.
+        List<Path> sortedDirectories =
+                directories.stream().sorted(Comparator.comparingInt(Path::getNameCount).reversed()).toList();
+        for (Path directory : sortedDirectories) {
+            try {
+                Files.delete(directory);
+            } catch (DirectoryNotEmptyException | NoSuchFileException ignored) {
+            }
+        }
+    }
+
+    private static List<TreeEntry> parseTree(Path root, TreeEntry tree) throws IOException {
+        if (!"tree".equals(tree.type)) {
+            throw new RuntimeException(String.format("Expected 'tree' object, got '%s' (%s)", tree.type,
+                    tree.objectId));
+        }
         var treeString = new String(Data.getObject(root, tree.objectId), StandardCharsets.UTF_8);
-        for (String entryString : treeString.split("\n")) {
-            var entry = TreeEntry.fromStringRelativeToPath(entryString, tree.path);
+        return Arrays.stream(treeString.split("\n"))
+                .map(entryString -> TreeEntry.fromStringRelativeToPath(entryString, tree.path))
+                .toList();
+    }
+
+    private static void gatherTreeEntries(Path root, TreeEntry tree, List<TreeEntry> entries) throws IOException {
+        for (var entry : parseTree(root, tree)) {
             if ("blob".equals(entry.type)) {
                 entries.add(entry);
             } else if ("tree".equals(entry.type)) {
-                parseTree(root, entry, entries);
+                gatherTreeEntries(root, entry, entries);
             } else {
                 throw new RuntimeException(String.format("Unexpected tree entry type '%s'", entry.type));
             }
