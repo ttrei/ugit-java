@@ -88,7 +88,7 @@ public class Base {
 
     public static String commit(String message) throws IOException {
         String treeObjectId = writeTree("");
-        var commitObject = new Data.Commit(treeObjectId, Data.getHead().orElse(null), message);
+        var commitObject = new Commit(treeObjectId, Data.getHead().orElse(null), message);
         String commitObjectId = Data.hashObject(commitObject.toString().getBytes(), "commit");
         Data.setHead(commitObjectId);
         return commitObjectId;
@@ -168,6 +168,18 @@ public class Base {
                 throw new RuntimeException(String.format("Invalid tree entry: '%s'", entry));
             }
             return new TreeEntry(parts[0], parts[1], baseDir.resolve(parts[2]));
+        }
+    }
+
+    public record Commit(String treeId, String parentId, String message) {
+        @Override
+        public String toString() {
+            var sb = new StringBuilder("tree ").append(treeId).append("\n");
+            if (parentId != null) {
+                sb.append("parent ").append(parentId);
+            }
+            sb.append("\n").append(message).append("\n");
+            return sb.toString();
         }
     }
 

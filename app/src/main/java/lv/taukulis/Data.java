@@ -85,16 +85,4 @@ public class Data {
         }
     }
 
-    public record Commit(String treeId, String parentId, String message) {
-        @Override
-        public String toString() {
-            var sb = new StringBuilder("tree ").append(treeId).append("\n");
-            if (parentId != null) {
-                sb.append("parent ").append(parentId);
-            }
-            sb.append("\n").append(message).append("\n");
-            return sb.toString();
-        }
-    }
-
 }
