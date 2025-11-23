@@ -22,8 +22,6 @@ import java.util.stream.StreamSupport;
 
 public class Base {
 
-    private static final String GIT_DIR = ".ugit";
-
     public static String writeTree(String directory) throws IOException {
         Path path = GitContext.roodDir().resolve(directory);
         if (!Files.isDirectory(path)) {
@@ -155,7 +153,7 @@ public class Base {
     }
 
     private static boolean isIgnored(Path path) {
-        return StreamSupport.stream(path.spliterator(), true).anyMatch(p -> p.toString().equals(GIT_DIR));
+        return StreamSupport.stream(path.spliterator(), true).anyMatch(p -> p.toString().equals(GitContext.GIT_DIR));
     }
 
     private record TreeEntry(String type, String objectId, Path path) {
