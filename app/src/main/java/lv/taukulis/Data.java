@@ -22,7 +22,7 @@ public class Data {
         System.out.println("Initialized empty ugit repository at " + gitDir.toAbsolutePath());
     }
 
-    public static String hashObject(byte[] dataBytes, String type) throws IOException {
+    public static String hashObject(byte[] dataBytes, ObjectType type) throws IOException {
         MessageDigest md;
         try {
             md = MessageDigest.getInstance("SHA-1");
@@ -30,7 +30,7 @@ public class Data {
             throw new RuntimeException("SHA-1 algorithm not available", e);
         }
 
-        byte[] typeBytes = type.getBytes();
+        byte[] typeBytes = type.getValue().getBytes();
         ByteBuffer typeAndDataBuffer = ByteBuffer.allocate(typeBytes.length + 1 + dataBytes.length);
         typeAndDataBuffer.put(typeBytes);
         typeAndDataBuffer.put(NULL_BYTE);
@@ -43,7 +43,11 @@ public class Data {
         return objectId;
     }
 
-    public static byte[] getObject(String objectId, String expectedType) throws IOException {
+    public static String getObjectString(String objectId, ObjectType expectedType) throws IOException {
+        return new String(getObject(objectId, expectedType));
+    }
+
+    public static byte[] getObject(String objectId, ObjectType expectedType) throws IOException {
         byte[] objectBytes = Files.readAllBytes(GitContext.gitDir().resolve("objects").resolve(objectId));
 
         int separatorIndex = -1;
@@ -64,9 +68,9 @@ public class Data {
             dataBytes = new byte[0];
         }
 
-        var type = new String(typeBytes);
+        var type = ObjectType.fromValue(new String(typeBytes));
         if (expectedType != null && !type.equals(expectedType)) {
-            throw new RuntimeException("Expected type '" + expectedType + "', got '" + type + "'");
+            throw new RuntimeException("Expected object of type " + expectedType + ", got " + type);
         }
 
         return dataBytes;

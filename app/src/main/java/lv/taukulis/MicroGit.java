@@ -11,6 +11,7 @@ import picocli.CommandLine.Spec;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 @Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class,
@@ -60,7 +61,7 @@ class HashObjectCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        System.out.println(Data.hashObject(Files.readAllBytes(file), "blob"));
+        System.out.println(Data.hashObject(Files.readAllBytes(file), ObjectType.BLOB));
         return 0;
     }
 }
@@ -123,6 +124,26 @@ class CommitCommand implements Callable<Integer> {
     @Override
     public Integer call() throws IOException {
         System.out.println(Base.commit(String.join(" ", messageArgs)));
+        return 0;
+    }
+}
+
+@Command(name = "log", mixinStandardHelpOptions = true)
+class LogCommand implements Callable<Integer> {
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private MicroGit parent;
+
+    @Override
+    public Integer call() throws IOException {
+        Optional<String> commitId = Data.getHead();
+        if (commitId.isEmpty()) {
+            return 0;
+        }
+        Base.Commit commit = Base.getCommit(commitId.get());
+        while (commit.parentId() != null) {
+            Base.getCommit(commitId.get());
+        }
         return 0;
     }
 }

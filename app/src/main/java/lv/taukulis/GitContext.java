@@ -11,14 +11,14 @@ public class GitContext {
         root = rootPath;
     }
 
-    public static Path roodDir() {
+    public static Path rootDir() {
         if (root == null) {
-            throw new RuntimeException("root not set");
+            throw new RuntimeException("root unset");
         }
         return root;
     }
 
     public static Path gitDir() {
-        return roodDir().resolve(GIT_DIR);
+        return rootDir().resolve(GIT_DIR);
     }
 }

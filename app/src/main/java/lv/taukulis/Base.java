@@ -1,7 +1,6 @@
 package lv.taukulis;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -23,12 +22,12 @@ import java.util.stream.StreamSupport;
 public class Base {
 
     public static String writeTree(String directory) throws IOException {
-        Path path = GitContext.roodDir().resolve(directory);
+        Path path = GitContext.rootDir().resolve(directory);
         if (!Files.isDirectory(path)) {
             throw new IOException("write-tree called on non-directory");
         }
-        Map<Path, List<TreeEntry>> entries = new HashMap<>();
-        AtomicReference<String> rootObjectId = new AtomicReference<>();
+        Map<Path, List<TreeEntry>> dirEntries = new HashMap<>();
+        AtomicReference<String> rootTreeId = new AtomicReference<>();
 
         Files.walkFileTree(path, new SimpleFileVisitor<>() {
             @Override
@@ -36,7 +35,7 @@ public class Base {
                 if (isIgnored(dir)) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
-                entries.put(dir, new ArrayList<>());
+                dirEntries.put(dir, new ArrayList<>());
                 return FileVisitResult.CONTINUE;
             }
 
@@ -45,8 +44,8 @@ public class Base {
                 if (isIgnored(file)) {
                     return FileVisitResult.CONTINUE;
                 }
-                String objectId = Data.hashObject(Files.readAllBytes(file), "blob");
-                entries.get(file.getParent()).add(new TreeEntry("blob", objectId, file.getFileName()));
+                String id = Data.hashObject(Files.readAllBytes(file), ObjectType.BLOB);
+                dirEntries.get(file.getParent()).add(new TreeEntry(ObjectType.BLOB, id, file.getFileName().toString()));
                 return FileVisitResult.CONTINUE;
             }
 
@@ -55,62 +54,69 @@ public class Base {
                 if (exc != null) {
                     throw exc;
                 }
-                var tree = new Tree(entries.remove(dir));
+                var tree = new Tree(dirEntries.remove(dir));
                 if (tree.entries.isEmpty()) {
                     // Don't track empty directories.
                     return FileVisitResult.CONTINUE;
                 }
-                String treeObjectId = Data.hashObject(tree.toString().getBytes(), "tree");
-                Path parent = dir.getParent();
-                if (parent != null && entries.containsKey(parent)) {
-                    entries.get(parent).add(new TreeEntry("tree", treeObjectId, dir.getFileName()));
+                String treeId = Data.hashObject(tree.toString().getBytes(), ObjectType.TREE);
+                Path parentDir = dir.getParent();
+                if (parentDir != null && dirEntries.containsKey(parentDir)) {
+                    dirEntries.get(parentDir).add(new TreeEntry(ObjectType.TREE, treeId, dir.getFileName().toString()));
                 } else {
-                    rootObjectId.set(treeObjectId);
+                    rootTreeId.set(treeId);
                 }
                 return FileVisitResult.CONTINUE;
             }
         });
 
-        return rootObjectId.get();
+        return rootTreeId.get();
     }
 
-    public static void readTree(String treeObjectId) throws IOException {
-        var tree = new TreeEntry("tree", treeObjectId, GitContext.roodDir());
-        List<TreeEntry> entries = new ArrayList<>();
-        gatherTreeEntries(tree, entries);
+    public static void readTree(String treeId) throws IOException {
+        var tree = Tree.fromId(treeId);
+        Map<Path, String> blobs = tree.getAllBlobs(GitContext.rootDir());
         // TODO: Remove the current tree instead (when pointer to current tree implemented).
-        unreadTree(tree);
-        for (TreeEntry entry : entries) {
-            Files.createDirectories(entry.path.getParent());
-            Files.write(entry.path, Data.getObject(entry.id, "blob"));
+        unreadTree(treeId);
+        for (Map.Entry<Path, String> entry : blobs.entrySet()) {
+            Path path = entry.getKey();
+            String blobId = entry.getValue();
+            Files.createDirectories(path.getParent());
+            Files.write(path, Data.getObject(blobId, ObjectType.BLOB));
         }
     }
 
     public static String commit(String message) throws IOException {
         String treeObjectId = writeTree("");
         var commitObject = new Commit(treeObjectId, Data.getHead().orElse(null), message);
-        String commitObjectId = Data.hashObject(commitObject.toString().getBytes(), "commit");
+        String commitObjectId = Data.hashObject(commitObject.toString().getBytes(), ObjectType.COMMIT);
         Data.setHead(commitObjectId);
         return commitObjectId;
+    }
+
+    public static Commit getCommit(String id) throws IOException {
+        // TODO
+        byte[] data = Data.getObject(id, ObjectType.COMMIT);
+        return new Commit("", "", "");
     }
 
     /**
      * Remove files of given tree from filesystem.
      * Keep untracked files/directories.
      */
-    private static void unreadTree(TreeEntry tree) throws IOException {
-        List<TreeEntry> entries = new ArrayList<>();
-        gatherTreeEntries(tree, entries);
+    private static void unreadTree(String treeId) throws IOException {
+        var tree = Tree.fromId(treeId);
+        Map<Path, String> blobs = tree.getAllBlobs(GitContext.rootDir());
         Set<Path> directories = new HashSet<>();
         // Remove files.
-        for (TreeEntry entry : entries) {
+        for (Path file : blobs.keySet()) {
             try {
-                Files.delete(entry.path);
+                Files.delete(file);
             } catch (NoSuchFileException ignored) {
             }
-            directories.add(entry.path.getParent());
+            directories.add(file.getParent());
         }
-        directories.remove(GitContext.roodDir());
+        directories.remove(GitContext.rootDir());
         // Remove empty directories deepest-first to remove as much as we can, given there may be untracked files in
         // the tree.
         List<Path> sortedDirectories =
@@ -123,28 +129,6 @@ public class Base {
         }
     }
 
-    private static List<TreeEntry> parseTree(TreeEntry tree) throws IOException {
-        if (!"tree".equals(tree.type)) {
-            throw new RuntimeException(String.format("Expected 'tree' object, got '%s' (%s)", tree.type, tree.id));
-        }
-        var treeString = new String(Data.getObject(tree.id, "tree"));
-        return Arrays.stream(treeString.split("\n"))
-                .map(entryString -> TreeEntry.fromStringRelativeToPath(entryString, tree.path))
-                .toList();
-    }
-
-    private static void gatherTreeEntries(TreeEntry tree, List<TreeEntry> entries) throws IOException {
-        for (var entry : parseTree(tree)) {
-            if ("blob".equals(entry.type)) {
-                entries.add(entry);
-            } else if ("tree".equals(entry.type)) {
-                gatherTreeEntries(entry, entries);
-            } else {
-                throw new RuntimeException(String.format("Unexpected tree entry type '%s'", entry.type));
-            }
-        }
-    }
-
     private static boolean isIgnored(Path path) {
         return StreamSupport.stream(path.spliterator(), true).anyMatch(p -> p.toString().equals(GitContext.GIT_DIR));
     }
@@ -153,23 +137,57 @@ public class Base {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            entries.forEach(entry -> sb.append(entry).append("\n"));
+            entries.stream()
+                    .sorted(Comparator.comparing(TreeEntry::name))
+                    .forEach(entry -> sb.append(entry).append("\n"));
             return sb.toString();
         }
-    }
 
-    private record TreeEntry(String type, String id, Path path) {
-        @Override
-        public String toString() {
-            return type + " " + id + " " + path;
+        public static Tree fromId(String treeId) throws IOException {
+            List<TreeEntry> entries = Arrays.stream(Data.getObjectString(treeId, ObjectType.TREE).split("\n"))
+                    .map(TreeEntry::fromString)
+                    .toList();
+            return new Tree(entries);
         }
 
-        public static TreeEntry fromStringRelativeToPath(String entry, Path baseDir) {
+        /**
+         * @return Map (blob path) -> (blob object id), containing all blobs in this tree and subtrees.
+         * Paths are resolved relative to baseDir.
+         */
+        public Map<Path, String> getAllBlobs(Path baseDir) {
+            Map<Path, String> blobs = new HashMap<>();
+            entries.stream()
+                    .filter(entry -> entry.type.equals(ObjectType.BLOB))
+                    .forEach(entry -> blobs.put(baseDir.resolve(entry.name), entry.id));
+            // TODO: This implementation makes too many copies.
+            entries.stream()
+                    .filter(entry -> entry.type.equals(ObjectType.TREE))
+                    .forEach(entry -> {
+                        Tree tree;
+                        try {
+                            tree = Tree.fromId(entry.id);
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        blobs.putAll(tree.getAllBlobs(baseDir.resolve(entry.name)));
+                    });
+            return blobs;
+        }
+
+    }
+
+    private record TreeEntry(ObjectType type, String id, String name) {
+        @Override
+        public String toString() {
+            return type.getValue() + " " + id + " " + name;
+        }
+
+        public static TreeEntry fromString(String entry) {
             String[] parts = entry.split(" ", 3);
             if (parts.length < 3) {
-                throw new RuntimeException(String.format("Invalid tree entry: '%s'", entry));
+                throw new RuntimeException("Invalid tree entry: " + entry);
             }
-            return new TreeEntry(parts[0], parts[1], baseDir.resolve(parts[2]));
+            return new TreeEntry(ObjectType.fromValue(parts[0]), parts[1], parts[2]);
         }
     }
 
@@ -182,6 +200,11 @@ public class Base {
             }
             sb.append("\n").append(message).append("\n");
             return sb.toString();
+        }
+
+        public static Commit fromId(String commitId) {
+            // TODO
+            return new Commit("", "", "");
         }
     }
 
