@@ -2,6 +2,8 @@
 
   https://www.leshenko.net/p/ugit
 
+** Move TreeEntry record definition to Data.java, as TreeObject
+
 ** Current chapter
 
    https://www.leshenko.net/p/ugit/#log
