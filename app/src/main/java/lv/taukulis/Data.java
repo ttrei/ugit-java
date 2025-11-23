@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Optional;
 
 public class Data {
 
@@ -83,6 +84,14 @@ public class Data {
 
     public static void setHead(Path root, String commitObjectId) throws IOException {
         Files.write(gitDir(root).resolve("HEAD"), (commitObjectId + "\n").getBytes());
+    }
+
+    public static Optional<String> getHead(Path root) throws IOException {
+        try {
+            return Optional.of(Files.readString(gitDir(root).resolve("HEAD")));
+        } catch (NoSuchFileException e) {
+            return Optional.empty();
+        }
     }
 
 }

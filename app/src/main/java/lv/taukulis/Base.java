@@ -89,9 +89,11 @@ public class Base {
     }
 
     public static String commit(Path root, String message) throws IOException {
-        String objectId = writeTree(root, "");
-        String commitString = "tree " + objectId + "\n\n" + message + "\n";
-        String commitObjectId = Data.hashObject(root, commitString.getBytes(), "commit");
+        String treeObjectId = writeTree(root, "");
+        var sb = new StringBuilder("tree ").append(treeObjectId).append("\n");
+        Data.getHead(root).ifPresent(head -> sb.append("parent ").append(head));
+        sb.append("\n").append(message).append("\n");
+        String commitObjectId = Data.hashObject(root, sb.toString().getBytes(), "commit");
         Data.setHead(root, commitObjectId);
         return commitObjectId;
     }
