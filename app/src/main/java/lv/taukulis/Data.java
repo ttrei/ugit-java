@@ -12,12 +12,14 @@ import java.util.Arrays;
 
 public class Data {
 
-    private static final String GIT_DIR = ".ugit";
-
     private static final byte NULL_BYTE = 0x00;
 
+    private static Path gitDir(Path root) {
+        return root.resolve(".ugit");
+    }
+
     public static void init(Path root) throws IOException {
-        Path ugitPath = root.resolve(GIT_DIR);
+        Path ugitPath = gitDir(root);
         Path objectsPath = ugitPath.resolve("objects");
         Files.createDirectory(ugitPath);
         Files.createDirectory(objectsPath);
@@ -40,7 +42,7 @@ public class Data {
         byte[] typeAndDataBytes = typeAndDataBuffer.array();
 
         String objectId = Utils.bytesToHex(md.digest(typeAndDataBytes));
-        Path objectPath = root.resolve(Paths.get(GIT_DIR, "objects", objectId));
+        Path objectPath = gitDir(root).resolve("objects").resolve(objectId);
         Files.write(objectPath, typeAndDataBytes);
         return objectId;
     }
@@ -51,7 +53,7 @@ public class Data {
     }
 
     public static byte[] getObject(Path root, String objectId, String expectedType) throws IOException {
-        byte[] objectBytes = Files.readAllBytes(root.resolve(Paths.get(GIT_DIR, "objects", objectId)));
+        byte[] objectBytes = Files.readAllBytes(gitDir(root).resolve("objects").resolve(objectId));
 
         int separatorIndex = -1;
         for (int i = 0; i < objectBytes.length; i++) {
@@ -77,6 +79,10 @@ public class Data {
         }
 
         return dataBytes;
+    }
+
+    public static void setHead(Path root, String commitObjectId) throws IOException {
+        Files.write(gitDir(root).resolve("HEAD"), (commitObjectId + "\n").getBytes());
     }
 
 }
