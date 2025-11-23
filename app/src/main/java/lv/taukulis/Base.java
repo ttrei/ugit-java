@@ -55,12 +55,12 @@ public class Base {
                 if (exc != null) {
                     throw exc;
                 }
-                List<TreeEntry> dirEntries = entries.remove(dir);
-                if (dirEntries.isEmpty()) {
+                var tree = new Tree(entries.remove(dir));
+                if (tree.entries.isEmpty()) {
                     // Don't track empty directories.
                     return FileVisitResult.CONTINUE;
                 }
-                String treeObjectId = Data.hashObject(buildTreeString(dirEntries).getBytes(), "tree");
+                String treeObjectId = Data.hashObject(tree.toString().getBytes(), "tree");
                 Path parent = dir.getParent();
                 if (parent != null && entries.containsKey(parent)) {
                     entries.get(parent).add(new TreeEntry("tree", treeObjectId, dir.getFileName()));
@@ -82,7 +82,7 @@ public class Base {
         unreadTree(tree);
         for (TreeEntry entry : entries) {
             Files.createDirectories(entry.path.getParent());
-            Files.write(entry.path, Data.getObject(entry.objectId, "blob"));
+            Files.write(entry.path, Data.getObject(entry.id, "blob"));
         }
     }
 
@@ -125,10 +125,9 @@ public class Base {
 
     private static List<TreeEntry> parseTree(TreeEntry tree) throws IOException {
         if (!"tree".equals(tree.type)) {
-            throw new RuntimeException(String.format("Expected 'tree' object, got '%s' (%s)", tree.type,
-                    tree.objectId));
+            throw new RuntimeException(String.format("Expected 'tree' object, got '%s' (%s)", tree.type, tree.id));
         }
-        var treeString = new String(Data.getObject(tree.objectId, "tree"), StandardCharsets.UTF_8);
+        var treeString = new String(Data.getObject(tree.id, "tree"));
         return Arrays.stream(treeString.split("\n"))
                 .map(entryString -> TreeEntry.fromStringRelativeToPath(entryString, tree.path))
                 .toList();
@@ -146,20 +145,23 @@ public class Base {
         }
     }
 
-    private static String buildTreeString(List<TreeEntry> entries) {
-        StringBuilder sb = new StringBuilder();
-        entries.stream().sorted(Comparator.comparing(TreeEntry::type).thenComparing(TreeEntry::path)).forEach(entry -> sb.append(entry).append("\n"));
-        return sb.toString();
-    }
-
     private static boolean isIgnored(Path path) {
         return StreamSupport.stream(path.spliterator(), true).anyMatch(p -> p.toString().equals(GitContext.GIT_DIR));
     }
 
-    private record TreeEntry(String type, String objectId, Path path) {
+    private record Tree(List<TreeEntry> entries) {
         @Override
         public String toString() {
-            return type + " " + objectId + " " + path;
+            StringBuilder sb = new StringBuilder();
+            entries.forEach(entry -> sb.append(entry).append("\n"));
+            return sb.toString();
+        }
+    }
+
+    private record TreeEntry(String type, String id, Path path) {
+        @Override
+        public String toString() {
+            return type + " " + id + " " + path;
         }
 
         public static TreeEntry fromStringRelativeToPath(String entry, Path baseDir) {

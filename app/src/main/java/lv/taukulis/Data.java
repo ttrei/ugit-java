@@ -2,7 +2,6 @@ package lv.taukulis;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -65,7 +64,7 @@ public class Data {
             dataBytes = new byte[0];
         }
 
-        var type = new String(typeBytes, StandardCharsets.UTF_8);
+        var type = new String(typeBytes);
         if (expectedType != null && !type.equals(expectedType)) {
             throw new RuntimeException("Expected type '" + expectedType + "', got '" + type + "'");
         }
