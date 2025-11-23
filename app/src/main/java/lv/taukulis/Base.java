@@ -24,8 +24,8 @@ public class Base {
 
     private static final String GIT_DIR = ".ugit";
 
-    public static String writeTree(Path root, String directory) throws IOException {
-        Path path = root.resolve(directory);
+    public static String writeTree(String directory) throws IOException {
+        Path path = GitContext.roodDir().resolve(directory);
         if (!Files.isDirectory(path)) {
             throw new IOException("write-tree called on non-directory");
         }
@@ -47,7 +47,7 @@ public class Base {
                 if (isIgnored(file)) {
                     return FileVisitResult.CONTINUE;
                 }
-                String objectId = Data.hashObject(root, Files.readAllBytes(file), "blob");
+                String objectId = Data.hashObject(Files.readAllBytes(file), "blob");
                 entries.get(file.getParent()).add(new TreeEntry("blob", objectId, file.getFileName()));
                 return FileVisitResult.CONTINUE;
             }
@@ -62,7 +62,7 @@ public class Base {
                     // Don't track empty directories.
                     return FileVisitResult.CONTINUE;
                 }
-                String treeObjectId = Data.hashObject(root, buildTreeString(dirEntries).getBytes(), "tree");
+                String treeObjectId = Data.hashObject(buildTreeString(dirEntries).getBytes(), "tree");
                 Path parent = dir.getParent();
                 if (parent != null && entries.containsKey(parent)) {
                     entries.get(parent).add(new TreeEntry("tree", treeObjectId, dir.getFileName()));
@@ -76,23 +76,23 @@ public class Base {
         return rootObjectId.get();
     }
 
-    public static void readTree(Path root, String treeObjectId) throws IOException {
-        var tree = new TreeEntry("tree", treeObjectId, root);
+    public static void readTree(String treeObjectId) throws IOException {
+        var tree = new TreeEntry("tree", treeObjectId, GitContext.roodDir());
         List<TreeEntry> entries = new ArrayList<>();
-        gatherTreeEntries(root, tree, entries);
+        gatherTreeEntries(tree, entries);
         // TODO: Remove the current tree instead (when pointer to current tree implemented).
-        unreadTree(root, tree);
+        unreadTree(tree);
         for (TreeEntry entry : entries) {
             Files.createDirectories(entry.path.getParent());
-            Files.write(entry.path, Data.getObject(root, entry.objectId, "blob"));
+            Files.write(entry.path, Data.getObject(entry.objectId, "blob"));
         }
     }
 
-    public static String commit(Path root, String message) throws IOException {
-        String treeObjectId = writeTree(root, "");
-        var commitObject = new Data.Commit(treeObjectId, Data.getHead(root).orElse(null), message);
-        String commitObjectId = Data.hashObject(root, commitObject.toString().getBytes(), "commit");
-        Data.setHead(root, commitObjectId);
+    public static String commit(String message) throws IOException {
+        String treeObjectId = writeTree("");
+        var commitObject = new Data.Commit(treeObjectId, Data.getHead().orElse(null), message);
+        String commitObjectId = Data.hashObject(commitObject.toString().getBytes(), "commit");
+        Data.setHead(commitObjectId);
         return commitObjectId;
     }
 
@@ -100,9 +100,9 @@ public class Base {
      * Remove files of given tree from filesystem.
      * Keep untracked files/directories.
      */
-    private static void unreadTree(Path root, TreeEntry tree) throws IOException {
+    private static void unreadTree(TreeEntry tree) throws IOException {
         List<TreeEntry> entries = new ArrayList<>();
-        gatherTreeEntries(root, tree, entries);
+        gatherTreeEntries(tree, entries);
         Set<Path> directories = new HashSet<>();
         // Remove files.
         for (TreeEntry entry : entries) {
@@ -112,7 +112,7 @@ public class Base {
             }
             directories.add(entry.path.getParent());
         }
-        directories.remove(root);
+        directories.remove(GitContext.roodDir());
         // Remove empty directories deepest-first to remove as much as we can, given there may be untracked files in
         // the tree.
         List<Path> sortedDirectories =
@@ -125,23 +125,23 @@ public class Base {
         }
     }
 
-    private static List<TreeEntry> parseTree(Path root, TreeEntry tree) throws IOException {
+    private static List<TreeEntry> parseTree(TreeEntry tree) throws IOException {
         if (!"tree".equals(tree.type)) {
             throw new RuntimeException(String.format("Expected 'tree' object, got '%s' (%s)", tree.type,
                     tree.objectId));
         }
-        var treeString = new String(Data.getObject(root, tree.objectId, "tree"), StandardCharsets.UTF_8);
+        var treeString = new String(Data.getObject(tree.objectId, "tree"), StandardCharsets.UTF_8);
         return Arrays.stream(treeString.split("\n"))
                 .map(entryString -> TreeEntry.fromStringRelativeToPath(entryString, tree.path))
                 .toList();
     }
 
-    private static void gatherTreeEntries(Path root, TreeEntry tree, List<TreeEntry> entries) throws IOException {
-        for (var entry : parseTree(root, tree)) {
+    private static void gatherTreeEntries(TreeEntry tree, List<TreeEntry> entries) throws IOException {
+        for (var entry : parseTree(tree)) {
             if ("blob".equals(entry.type)) {
                 entries.add(entry);
             } else if ("tree".equals(entry.type)) {
-                gatherTreeEntries(root, entry, entries);
+                gatherTreeEntries(entry, entries);
             } else {
                 throw new RuntimeException(String.format("Unexpected tree entry type '%s'", entry.type));
             }

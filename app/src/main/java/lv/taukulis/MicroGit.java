@@ -11,7 +11,6 @@ import picocli.CommandLine.Spec;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 @Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class,
@@ -26,12 +25,14 @@ public class MicroGit {
     Path root;
 
     public static void main(String[] args) {
-        int exitCode = new CommandLine(new MicroGit()).execute(args);
+        var cmd = new CommandLine(new MicroGit());
+        cmd.setExecutionStrategy((parseResult) -> {
+            MicroGit microGit = (MicroGit) parseResult.commandSpec().userObject();
+            GitContext.setRoot(microGit.root);
+            return new CommandLine.RunLast().execute(parseResult);
+        });
+        int exitCode = cmd.execute(args);
         System.exit(exitCode);
-    }
-
-    public Path getRoot() {
-        return root != null ? root : Paths.get(".");
     }
 }
 
@@ -43,7 +44,7 @@ class InitCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        Data.init(parent.getRoot());
+        Data.init();
         return 0;
     }
 }
@@ -59,7 +60,7 @@ class HashObjectCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        System.out.println(Data.hashObject(parent.getRoot(), Files.readAllBytes(file), "blob"));
+        System.out.println(Data.hashObject(Files.readAllBytes(file), "blob"));
         return 0;
     }
 }
@@ -75,7 +76,7 @@ class CatFilesCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        System.out.write(Data.getObject(parent.getRoot(), objectId, null));
+        System.out.write(Data.getObject(objectId, null));
         System.out.flush();
         return 0;
     }
@@ -89,7 +90,7 @@ class WriteTreeCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        System.out.println(Base.writeTree(parent.getRoot(), ""));
+        System.out.println(Base.writeTree(""));
         return 0;
     }
 }
@@ -105,7 +106,7 @@ class ReadTreeCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        Base.readTree(parent.getRoot(), treeObjectId);
+        Base.readTree(treeObjectId);
         return 0;
     }
 }
@@ -121,7 +122,7 @@ class CommitCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        System.out.println(Base.commit(parent.getRoot(), String.join(" ", messageArgs)));
+        System.out.println(Base.commit(String.join(" ", messageArgs)));
         return 0;
     }
 }

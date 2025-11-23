@@ -15,19 +15,15 @@ public class Data {
 
     private static final byte NULL_BYTE = 0x00;
 
-    private static Path gitDir(Path root) {
-        return root.resolve(".ugit");
-    }
-
-    public static void init(Path root) throws IOException {
-        Path ugitPath = gitDir(root);
-        Path objectsPath = ugitPath.resolve("objects");
-        Files.createDirectory(ugitPath);
+    public static void init() throws IOException {
+        Path gitDir = GitContext.gitDir();
+        Path objectsPath = gitDir.resolve("objects");
+        Files.createDirectory(gitDir);
         Files.createDirectory(objectsPath);
-        System.out.println("Initialized empty ugit repository at " + ugitPath.toAbsolutePath());
+        System.out.println("Initialized empty ugit repository at " + gitDir.toAbsolutePath());
     }
 
-    public static String hashObject(Path root, byte[] dataBytes, String type) throws IOException {
+    public static String hashObject(byte[] dataBytes, String type) throws IOException {
         MessageDigest md;
         try {
             md = MessageDigest.getInstance("SHA-1");
@@ -43,13 +39,13 @@ public class Data {
         byte[] typeAndDataBytes = typeAndDataBuffer.array();
 
         String objectId = Utils.bytesToHex(md.digest(typeAndDataBytes));
-        Path objectPath = gitDir(root).resolve("objects").resolve(objectId);
+        Path objectPath = GitContext.gitDir().resolve("objects").resolve(objectId);
         Files.write(objectPath, typeAndDataBytes);
         return objectId;
     }
 
-    public static byte[] getObject(Path root, String objectId, String expectedType) throws IOException {
-        byte[] objectBytes = Files.readAllBytes(gitDir(root).resolve("objects").resolve(objectId));
+    public static byte[] getObject(String objectId, String expectedType) throws IOException {
+        byte[] objectBytes = Files.readAllBytes(GitContext.gitDir().resolve("objects").resolve(objectId));
 
         int separatorIndex = -1;
         for (int i = 0; i < objectBytes.length; i++) {
@@ -77,13 +73,13 @@ public class Data {
         return dataBytes;
     }
 
-    public static void setHead(Path root, String commitObjectId) throws IOException {
-        Files.write(gitDir(root).resolve("HEAD"), (commitObjectId + "\n").getBytes());
+    public static void setHead(String commitObjectId) throws IOException {
+        Files.write(GitContext.gitDir().resolve("HEAD"), (commitObjectId + "\n").getBytes());
     }
 
-    public static Optional<String> getHead(Path root) throws IOException {
+    public static Optional<String> getHead() throws IOException {
         try {
-            return Optional.of(Files.readString(gitDir(root).resolve("HEAD")));
+            return Optional.of(Files.readString(GitContext.gitDir().resolve("HEAD")));
         } catch (NoSuchFileException e) {
             return Optional.empty();
         }
