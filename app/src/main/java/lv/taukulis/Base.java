@@ -111,7 +111,8 @@ public class Base {
             directories.add(entry.path.getParent());
         }
         directories.remove(root);
-        // Remove directories deepest-first to remove as much as we can, given there may be untracked files in the tree.
+        // Remove empty directories deepest-first to remove as much as we can, given there may be untracked files in
+        // the tree.
         List<Path> sortedDirectories =
                 directories.stream().sorted(Comparator.comparingInt(Path::getNameCount).reversed()).toList();
         for (Path directory : sortedDirectories) {
