@@ -84,7 +84,7 @@ public class Base {
         unreadTree(root, tree);
         for (TreeEntry entry : entries) {
             Files.createDirectories(entry.path.getParent());
-            Files.write(entry.path, Data.getObject(root, entry.objectId));
+            Files.write(entry.path, Data.getObject(root, entry.objectId, "blob"));
         }
     }
 

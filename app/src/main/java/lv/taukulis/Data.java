@@ -48,11 +48,6 @@ public class Data {
         return objectId;
     }
 
-    @SuppressWarnings("unused")
-    public static byte[] getObject(Path root, String objectId) throws IOException {
-        return getObject(root, objectId, "blob");
-    }
-
     public static byte[] getObject(Path root, String objectId, String expectedType) throws IOException {
         byte[] objectBytes = Files.readAllBytes(gitDir(root).resolve("objects").resolve(objectId));
 
