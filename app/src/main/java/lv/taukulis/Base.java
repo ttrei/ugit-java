@@ -95,9 +95,7 @@ public class Base {
     }
 
     public static Commit getCommit(String id) throws IOException {
-        // TODO
-        byte[] data = Data.getObject(id, ObjectType.COMMIT);
-        return new Commit("", "", "");
+        return Commit.fromId(id);
     }
 
     /**
@@ -194,17 +192,47 @@ public class Base {
     public record Commit(String treeId, String parentId, String message) {
         @Override
         public String toString() {
-            var sb = new StringBuilder("tree ").append(treeId).append("\n");
+            var sb = new StringBuilder();
+            sb.append("tree ").append(treeId).append("\n");
             if (parentId != null) {
-                sb.append("parent ").append(parentId);
+                sb.append("parent ").append(parentId).append("\n");
             }
-            sb.append("\n").append(message).append("\n");
+            if (message != null) {
+                sb.append("\n");
+                sb.append(message).append("\n");
+            }
             return sb.toString();
         }
 
-        public static Commit fromId(String commitId) {
-            // TODO
-            return new Commit("", "", "");
+        public static Commit fromId(String commitId) throws IOException {
+            String commitString = new String(Data.getObject(commitId, ObjectType.COMMIT));
+
+            String treeId = null;
+            String parentId = null;
+            String message = null;
+
+            String[] lines = commitString.split("\n");
+            int i = 0;
+
+            while (i < lines.length && !lines[i].isEmpty()) {
+                String line = lines[i];
+                if (line.startsWith("tree ")) {
+                    treeId = line.substring(5);
+                } else if (line.startsWith("parent ")) {
+                    parentId = line.substring(7);
+                }
+                i++;
+            }
+            i++;
+            if (treeId == null) {
+                throw new RuntimeException(String.format("Commit %s without tree id", commitId));
+            }
+
+            if (i < lines.length) {
+                message = String.join("\n", Arrays.copyOfRange(lines, i, lines.length));
+            }
+
+            return new Commit(treeId, parentId, message);
         }
     }
 

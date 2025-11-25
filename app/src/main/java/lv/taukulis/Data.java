@@ -48,7 +48,7 @@ public class Data {
     }
 
     public static byte[] getObject(String objectId, ObjectType expectedType) throws IOException {
-        byte[] objectBytes = Files.readAllBytes(GitContext.gitDir().resolve("objects").resolve(objectId));
+        byte[] objectBytes = Files.readAllBytes(GitContext.gitDir().resolve("objects/").resolve(objectId));
 
         int separatorIndex = -1;
         for (int i = 0; i < objectBytes.length; i++) {
@@ -82,7 +82,7 @@ public class Data {
 
     public static Optional<String> getHead() throws IOException {
         try {
-            return Optional.of(Files.readString(GitContext.gitDir().resolve("HEAD")));
+            return Optional.of(Files.readString(GitContext.gitDir().resolve("HEAD")).strip());
         } catch (NoSuchFileException e) {
             return Optional.empty();
         }

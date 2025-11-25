@@ -13,10 +13,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 @Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class,
         InitCommand.class, HashObjectCommand.class, CatFilesCommand.class, WriteTreeCommand.class,
-        ReadTreeCommand.class, CommitCommand.class})
+        ReadTreeCommand.class, CommitCommand.class, LogCommand.class})
 public class MicroGit {
     @SuppressWarnings("unused")
     @Spec
@@ -136,13 +137,21 @@ class LogCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        Optional<String> commitId = Data.getHead();
-        if (commitId.isEmpty()) {
+        Optional<String> commitIdOptional = Data.getHead();
+        if (commitIdOptional.isEmpty()) {
             return 0;
         }
-        Base.Commit commit = Base.getCommit(commitId.get());
-        while (commit.parentId() != null) {
-            Base.getCommit(commitId.get());
+        String commitId = commitIdOptional.get();
+        while (commitId != null) {
+            Base.Commit commit = Base.getCommit(commitId);
+            System.out.println("commit " + commitId);
+            if (commit.message() != null) {
+                String indentedMessage = commit.message().lines()
+                        .map(line -> "    " + line)
+                        .collect(Collectors.joining("\n"));
+                System.out.println(indentedMessage);
+            }
+            commitId = commit.parentId();
         }
         return 0;
     }
