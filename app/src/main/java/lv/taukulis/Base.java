@@ -76,8 +76,10 @@ public class Base {
     public static void readTree(String treeId) throws IOException {
         var tree = Tree.fromId(treeId);
         Map<Path, String> blobs = tree.getAllBlobs(GitContext.rootDir());
-        // TODO: Remove the current tree instead (when pointer to current tree implemented).
-        unreadTree(treeId);
+        String head = Data.getHead().orElse(null);
+        if (head != null) {
+            unreadTree(Commit.fromId(head).treeId);
+        }
         for (Map.Entry<Path, String> entry : blobs.entrySet()) {
             Path path = entry.getKey();
             String blobId = entry.getValue();
@@ -94,8 +96,14 @@ public class Base {
         return commitObjectId;
     }
 
-    public static Commit getCommit(String id) throws IOException {
-        return Commit.fromId(id);
+    public static Commit getCommit(String commitId) throws IOException {
+        return Commit.fromId(commitId);
+    }
+
+    public static void checkout(String commitId) throws IOException {
+        Commit commit = getCommit(commitId);
+        readTree(commit.treeId);
+        Data.setHead(commitId);
     }
 
     /**

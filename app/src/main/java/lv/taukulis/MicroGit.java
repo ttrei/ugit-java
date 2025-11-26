@@ -11,13 +11,12 @@ import picocli.CommandLine.Spec;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 @Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class,
         InitCommand.class, HashObjectCommand.class, CatFilesCommand.class, WriteTreeCommand.class,
-        ReadTreeCommand.class, CommitCommand.class, LogCommand.class})
+        ReadTreeCommand.class, CommitCommand.class, LogCommand.class, CheckoutCommand.class})
 public class MicroGit {
     @SuppressWarnings("unused")
     @Spec
@@ -155,6 +154,22 @@ class LogCommand implements Callable<Integer> {
             }
             commitId = commit.parentId();
         }
+        return 0;
+    }
+}
+
+@Command(name = "checkout", mixinStandardHelpOptions = true)
+class CheckoutCommand implements Callable<Integer> {
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private MicroGit parent;
+
+    @Parameters(arity = "1", description = "Commit ID")
+    String commitId;
+
+    @Override
+    public Integer call() throws IOException {
+        Base.checkout(commitId);
         return 0;
     }
 }
