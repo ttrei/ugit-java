@@ -135,13 +135,15 @@ class LogCommand implements Callable<Integer> {
     @ParentCommand
     private MicroGit parent;
 
+    @Parameters(arity = "0..1", description = "Commit ID")
+    String commitId;
+
     @Override
     public Integer call() throws IOException {
-        Optional<String> commitIdOptional = Data.getHead();
-        if (commitIdOptional.isEmpty()) {
+        String commitId = this.commitId != null ? this.commitId : Data.getHead().orElse(null);
+        if (commitId == null) {
             return 0;
         }
-        String commitId = commitIdOptional.get();
         while (commitId != null) {
             Base.Commit commit = Base.getCommit(commitId);
             System.out.println("commit " + commitId);
