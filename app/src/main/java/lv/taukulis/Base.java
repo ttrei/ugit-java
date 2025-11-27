@@ -109,7 +109,7 @@ public class Base {
     }
 
     public static void tag(String name, String commitId) throws IOException {
-        Data.updateRef("refs/" + name, commitId);
+        Data.updateRef("refs/tags/" + name, commitId);
     }
 
     /**
