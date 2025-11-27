@@ -188,7 +188,7 @@ public class Base {
 
     }
 
-    private record TreeEntry(ObjectType type, String id, String name) {
+    protected record TreeEntry(ObjectType type, String id, String name) {
         @Override
         public String toString() {
             return type.getValue() + " " + id + " " + name;

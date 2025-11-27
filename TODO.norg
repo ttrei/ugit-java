@@ -2,8 +2,6 @@
 
   https://www.leshenko.net/p/ugit
 
-** Add unittests
-
 ** Current chapter
 
    https://www.leshenko.net/p/ugit/#tag-cli-command
@@ -13,5 +11,9 @@
    Currently all errors bubble up to the cli commands, leading to stack trace in case of error.
    Relevant documentation:
    https://picocli.info/#execute
+
+** (done) Add unittests
+
+   AMP wrote some.
 
 ** (done) Run ugit from outside of the project
