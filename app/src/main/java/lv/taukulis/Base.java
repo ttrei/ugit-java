@@ -106,6 +106,10 @@ public class Base {
         Data.setHead(commitId);
     }
 
+    public static void tag(String name, String commitId) {
+
+    }
+
     /**
      * Remove files of given tree from filesystem.
      * Keep untracked files/directories.

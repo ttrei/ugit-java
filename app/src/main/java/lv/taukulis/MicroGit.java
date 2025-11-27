@@ -5,7 +5,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Spec;
 
 import java.io.IOException;
@@ -16,7 +15,7 @@ import java.util.stream.Collectors;
 
 @Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class,
         InitCommand.class, HashObjectCommand.class, CatFilesCommand.class, WriteTreeCommand.class,
-        ReadTreeCommand.class, CommitCommand.class, LogCommand.class, CheckoutCommand.class})
+        ReadTreeCommand.class, CommitCommand.class, LogCommand.class, CheckoutCommand.class, TagCommand.class})
 public class MicroGit {
     @SuppressWarnings("unused")
     @Spec
@@ -39,10 +38,6 @@ public class MicroGit {
 
 @Command(name = "init", mixinStandardHelpOptions = true)
 class InitCommand implements Callable<Integer> {
-    @SuppressWarnings("unused")
-    @ParentCommand
-    private MicroGit parent;
-
     @Override
     public Integer call() throws IOException {
         Data.init();
@@ -52,10 +47,6 @@ class InitCommand implements Callable<Integer> {
 
 @Command(name = "hash-object", mixinStandardHelpOptions = true)
 class HashObjectCommand implements Callable<Integer> {
-    @SuppressWarnings("unused")
-    @ParentCommand
-    private MicroGit parent;
-
     @Parameters(arity = "1", description = "File to hash")
     Path file;
 
@@ -68,10 +59,6 @@ class HashObjectCommand implements Callable<Integer> {
 
 @Command(name = "cat-file", mixinStandardHelpOptions = true)
 class CatFilesCommand implements Callable<Integer> {
-    @SuppressWarnings("unused")
-    @ParentCommand
-    private MicroGit parent;
-
     @Parameters(arity = "1", description = "Object ID")
     String objectId;
 
@@ -85,10 +72,6 @@ class CatFilesCommand implements Callable<Integer> {
 
 @Command(name = "write-tree", mixinStandardHelpOptions = true)
 class WriteTreeCommand implements Callable<Integer> {
-    @SuppressWarnings("unused")
-    @ParentCommand
-    private MicroGit parent;
-
     @Override
     public Integer call() throws IOException {
         System.out.println(Base.writeTree(""));
@@ -98,10 +81,6 @@ class WriteTreeCommand implements Callable<Integer> {
 
 @Command(name = "read-tree", mixinStandardHelpOptions = true)
 class ReadTreeCommand implements Callable<Integer> {
-    @SuppressWarnings("unused")
-    @ParentCommand
-    private MicroGit parent;
-
     @Parameters(arity = "1", description = "Object ID of a tree")
     String treeObjectId;
 
@@ -114,10 +93,6 @@ class ReadTreeCommand implements Callable<Integer> {
 
 @Command(name = "commit", mixinStandardHelpOptions = true)
 class CommitCommand implements Callable<Integer> {
-    @SuppressWarnings("unused")
-    @ParentCommand
-    private MicroGit parent;
-
     @Parameters(arity = "1..*", description = "Commit message")
     String[] messageArgs;
 
@@ -130,10 +105,6 @@ class CommitCommand implements Callable<Integer> {
 
 @Command(name = "log", mixinStandardHelpOptions = true)
 class LogCommand implements Callable<Integer> {
-    @SuppressWarnings("unused")
-    @ParentCommand
-    private MicroGit parent;
-
     @Parameters(arity = "0..1", description = "Commit ID")
     String commitId;
 
@@ -160,16 +131,31 @@ class LogCommand implements Callable<Integer> {
 
 @Command(name = "checkout", mixinStandardHelpOptions = true)
 class CheckoutCommand implements Callable<Integer> {
-    @SuppressWarnings("unused")
-    @ParentCommand
-    private MicroGit parent;
-
     @Parameters(arity = "1", description = "Commit ID")
     String commitId;
 
     @Override
     public Integer call() throws IOException {
         Base.checkout(commitId);
+        return 0;
+    }
+}
+
+@Command(name = "tag", mixinStandardHelpOptions = true)
+class TagCommand implements Callable<Integer> {
+    @Parameters(index = "0", description = "Tag name")
+    String name;
+
+    @Parameters(index = "1", arity = "0..1", description = "Commit ID")
+    String commitId;
+
+    @Override
+    public Integer call() throws IOException {
+        String commitId = this.commitId != null ? this.commitId : Data.getHead().orElse(null);
+        if (commitId == null) {
+            throw new RuntimeException("No commit to tag");
+        }
+        Base.tag(name, commitId);
         return 0;
     }
 }
