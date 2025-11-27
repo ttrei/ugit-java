@@ -108,8 +108,8 @@ public class Base {
         Data.updateRef(HEAD, commitId);
     }
 
-    public static void tag(String name, String commitId) {
-
+    public static void tag(String name, String commitId) throws IOException {
+        Data.updateRef("refs/" + name, commitId);
     }
 
     /**

@@ -78,8 +78,10 @@ public class Data {
         return dataBytes;
     }
 
-    public static void updateRef(String ref, String commitObjectId) throws IOException {
-        Files.write(GitContext.gitDir().resolve(ref), (commitObjectId + "\n").getBytes());
+    public static void updateRef(String ref, String commitId) throws IOException {
+        Path path = GitContext.gitDir().resolve(ref);
+        Files.createDirectories(path.getParent());
+        Files.write(path, (commitId + "\n").getBytes());
     }
 
     public static Optional<String> getRef(String ref) throws IOException {
