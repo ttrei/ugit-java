@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+import static lv.taukulis.Data.HEAD;
+
 @Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class,
         InitCommand.class, HashObjectCommand.class, CatFilesCommand.class, WriteTreeCommand.class,
         ReadTreeCommand.class, CommitCommand.class, LogCommand.class, CheckoutCommand.class, TagCommand.class})
@@ -110,7 +112,7 @@ class LogCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        String commitId = this.commitId != null ? this.commitId : Data.getHead().orElse(null);
+        String commitId = this.commitId != null ? this.commitId : Data.getRef(HEAD).orElse(null);
         if (commitId == null) {
             return 0;
         }
@@ -151,7 +153,7 @@ class TagCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        String commitId = this.commitId != null ? this.commitId : Data.getHead().orElse(null);
+        String commitId = this.commitId != null ? this.commitId : Data.getRef(HEAD).orElse(null);
         if (commitId == null) {
             throw new RuntimeException("No commit to tag");
         }

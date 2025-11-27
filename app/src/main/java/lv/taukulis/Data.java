@@ -12,6 +12,8 @@ import java.util.Optional;
 
 public class Data {
 
+    public static final String HEAD = "HEAD";
+
     private static final byte NULL_BYTE = 0x00;
 
     public static void init() throws IOException {
@@ -76,13 +78,13 @@ public class Data {
         return dataBytes;
     }
 
-    public static void setHead(String commitObjectId) throws IOException {
-        Files.write(GitContext.gitDir().resolve("HEAD"), (commitObjectId + "\n").getBytes());
+    public static void updateRef(String ref, String commitObjectId) throws IOException {
+        Files.write(GitContext.gitDir().resolve(ref), (commitObjectId + "\n").getBytes());
     }
 
-    public static Optional<String> getHead() throws IOException {
+    public static Optional<String> getRef(String ref) throws IOException {
         try {
-            return Optional.of(Files.readString(GitContext.gitDir().resolve("HEAD")).strip());
+            return Optional.of(Files.readString(GitContext.gitDir().resolve(ref)).strip());
         } catch (NoSuchFileException e) {
             return Optional.empty();
         }
