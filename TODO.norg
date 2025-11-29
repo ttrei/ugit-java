@@ -2,6 +2,10 @@
 
   https://www.leshenko.net/p/ugit
 
+** Current chapter
+
+   https://www.leshenko.net/p/ugit/#k-print-refs
+
 ** Review unittests, write new ones
 
 ** Create a simple integration test - shell script
@@ -11,10 +15,6 @@
    ~ Initialize repo.
    ~ Create files/directories.
    ~ etc
-
-** Current chapter
-
-   https://www.leshenko.net/p/ugit/#resolve-refs-argparse
 
 ** (nice to have) Proper error presentation for cli user
 
