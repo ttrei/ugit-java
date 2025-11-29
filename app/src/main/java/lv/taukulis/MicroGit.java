@@ -28,7 +28,6 @@ public class MicroGit {
 
     public static void main(String[] args) {
         var cmd = new CommandLine(new MicroGit());
-        cmd.registerConverter(Data.CommitRef.class, Data.CommitRef::new);
         cmd.setExecutionStrategy((parseResult) -> {
             MicroGit microGit = (MicroGit) parseResult.commandSpec().userObject();
             GitContext.setRoot(microGit.root);
@@ -109,14 +108,11 @@ class CommitCommand implements Callable<Integer> {
 @Command(name = "log", mixinStandardHelpOptions = true)
 class LogCommand implements Callable<Integer> {
     @Parameters(arity = "0..1", description = "Commit reference")
-    Data.CommitRef ref;
+    String ref;
 
     @Override
     public Integer call() throws IOException {
-        String commitId = this.ref != null ? this.ref.id() : Data.getRef(HEAD).orElse(null);
-        if (commitId == null) {
-            return 0;
-        }
+        String commitId = this.ref != null ? Data.resolveCommitId(ref) : Data.getRef(HEAD).orElse(null);
         while (commitId != null) {
             Base.Commit commit = Base.getCommit(commitId);
             System.out.println("commit " + commitId);
@@ -135,11 +131,11 @@ class LogCommand implements Callable<Integer> {
 @Command(name = "checkout", mixinStandardHelpOptions = true)
 class CheckoutCommand implements Callable<Integer> {
     @Parameters(arity = "1", description = "Commit reference")
-    Data.CommitRef ref;
+    String ref;
 
     @Override
     public Integer call() throws IOException {
-        Base.checkout(ref.id());
+        Base.checkout(Data.resolveCommitId(ref));
         return 0;
     }
 }
@@ -150,11 +146,11 @@ class TagCommand implements Callable<Integer> {
     String name;
 
     @Parameters(index = "1", arity = "0..1", description = "Commit reference")
-    Data.CommitRef ref;
+    String ref;
 
     @Override
     public Integer call() throws IOException {
-        String commitId = this.ref != null ? this.ref.id() : Data.getRef(HEAD).orElse(null);
+        String commitId = this.ref != null ? Data.resolveCommitId(ref) : Data.getRef(HEAD).orElse(null);
         if (commitId == null) {
             throw new RuntimeException("No commit to tag");
         }

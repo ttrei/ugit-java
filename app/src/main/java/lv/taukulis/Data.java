@@ -1,7 +1,5 @@
 package lv.taukulis;
 
-import picocli.CommandLine;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -11,6 +9,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class Data {
 
@@ -86,18 +85,35 @@ public class Data {
         Files.write(path, (commitId + "\n").getBytes());
     }
 
-    public static Optional<String> getRef(String ref) throws IOException {
+    public static Optional<String> getRef(String ref) {
         try {
             return Optional.of(Files.readString(GitContext.gitDir().resolve(ref)).strip());
         } catch (NoSuchFileException e) {
             return Optional.empty();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public record CommitRef(String ref) {
-        String id() throws IOException {
-            return getRef(ref).orElse(ref);
+    public static String resolveCommitId(String name) {
+        return Stream.of(name, "refs/" + name, "refs/tags/" + name, "refs/heads/" + name)
+                .map(Data::getRef)
+                .flatMap(Optional::stream)
+                .findFirst()
+                .orElseGet(() -> {
+                    if (isSha1Hash(name)) {
+                        return name;
+                    }
+                    throw new RuntimeException("Unknown name: " + name);
+                });
+    }
+
+    public static boolean isSha1Hash(String input) {
+        if (input == null) {
+            return false;
         }
+        // SHA-1 is exactly 40 hexadecimal characters
+        return input.matches("[a-fA-F0-9]{40}");
     }
 
 }
