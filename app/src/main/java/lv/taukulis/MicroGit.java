@@ -13,8 +13,6 @@ import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
-import static lv.taukulis.Data.HEAD;
-
 @Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class,
         InitCommand.class, HashObjectCommand.class, CatFilesCommand.class, WriteTreeCommand.class,
         ReadTreeCommand.class, CommitCommand.class, LogCommand.class, CheckoutCommand.class, TagCommand.class})
@@ -49,7 +47,7 @@ class InitCommand implements Callable<Integer> {
 
 @Command(name = "hash-object", mixinStandardHelpOptions = true)
 class HashObjectCommand implements Callable<Integer> {
-    @Parameters(arity = "1", description = "File to hash")
+    @Parameters(description = "File to hash")
     Path file;
 
     @Override
@@ -61,7 +59,7 @@ class HashObjectCommand implements Callable<Integer> {
 
 @Command(name = "cat-file", mixinStandardHelpOptions = true)
 class CatFilesCommand implements Callable<Integer> {
-    @Parameters(arity = "1", description = "Object ID")
+    @Parameters(description = "Object ID")
     String objectId;
 
     @Override
@@ -83,7 +81,7 @@ class WriteTreeCommand implements Callable<Integer> {
 
 @Command(name = "read-tree", mixinStandardHelpOptions = true)
 class ReadTreeCommand implements Callable<Integer> {
-    @Parameters(arity = "1", description = "Object ID of a tree")
+    @Parameters(description = "Object ID of a tree")
     String treeObjectId;
 
     @Override
@@ -107,12 +105,12 @@ class CommitCommand implements Callable<Integer> {
 
 @Command(name = "log", mixinStandardHelpOptions = true)
 class LogCommand implements Callable<Integer> {
-    @Parameters(arity = "0..1", description = "Commit reference")
+    @Parameters(defaultValue = "@", description = "Commit reference")
     String ref;
 
     @Override
     public Integer call() throws IOException {
-        String commitId = this.ref != null ? Data.resolveCommitId(ref) : Data.getRef(HEAD).orElse(null);
+        String commitId = Data.resolveCommitId(ref);
         while (commitId != null) {
             Base.Commit commit = Base.getCommit(commitId);
             System.out.println("commit " + commitId);
@@ -130,7 +128,7 @@ class LogCommand implements Callable<Integer> {
 
 @Command(name = "checkout", mixinStandardHelpOptions = true)
 class CheckoutCommand implements Callable<Integer> {
-    @Parameters(arity = "1", description = "Commit reference")
+    @Parameters(description = "Commit reference")
     String ref;
 
     @Override
@@ -145,16 +143,12 @@ class TagCommand implements Callable<Integer> {
     @Parameters(index = "0", description = "Tag name")
     String name;
 
-    @Parameters(index = "1", arity = "0..1", description = "Commit reference")
+    @Parameters(index = "1", defaultValue = "@", description = "Commit reference")
     String ref;
 
     @Override
     public Integer call() throws IOException {
-        String commitId = this.ref != null ? Data.resolveCommitId(ref) : Data.getRef(HEAD).orElse(null);
-        if (commitId == null) {
-            throw new RuntimeException("No commit to tag");
-        }
-        Base.tag(name, commitId);
+        Base.tag(name, Data.resolveCommitId(ref));
         return 0;
     }
 }

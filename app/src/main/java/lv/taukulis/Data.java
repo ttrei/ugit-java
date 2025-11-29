@@ -87,7 +87,8 @@ public class Data {
 
     public static Optional<String> getRef(String ref) {
         try {
-            return Optional.of(Files.readString(GitContext.gitDir().resolve(ref)).strip());
+            Path file = GitContext.gitDir().resolve("@".equals(ref) ? HEAD : ref);
+            return Optional.of(Files.readString(file).strip());
         } catch (NoSuchFileException e) {
             return Optional.empty();
         } catch (IOException e) {
