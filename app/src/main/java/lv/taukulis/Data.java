@@ -1,5 +1,7 @@
 package lv.taukulis;
 
+import picocli.CommandLine;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -89,6 +91,12 @@ public class Data {
             return Optional.of(Files.readString(GitContext.gitDir().resolve(ref)).strip());
         } catch (NoSuchFileException e) {
             return Optional.empty();
+        }
+    }
+
+    public record CommitRef(String ref) {
+        String id() throws IOException {
+            return getRef(ref).orElse(ref);
         }
     }
 
