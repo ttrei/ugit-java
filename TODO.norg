@@ -4,6 +4,14 @@
 
 ** Review unittests, write new ones
 
+** Create a simple integration test - shell script
+
+   Test only the happy path.
+   ~ Create temp directory.
+   ~ Initialize repo.
+   ~ Create files/directories.
+   ~ etc
+
 ** Current chapter
 
    https://www.leshenko.net/p/ugit/#resolve-refs-argparse
