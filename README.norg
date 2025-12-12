@@ -2,6 +2,17 @@
 
   https://www.leshenko.net/p/ugit
 
+** Build and run
+
+   @code
+   ./build.sh
+   ./run.sh
+
+   # "install" the "binary"
+   cp bin/ugit ~/bin/
+   ugit
+   @end
+
 ** Java Libraries
 
    *CLI*

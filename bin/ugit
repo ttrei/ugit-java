@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+java -jar /home/reinis/dev/projects/ugit-java/build/libs/*.jar "$@"

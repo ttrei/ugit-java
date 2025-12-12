@@ -9,13 +9,12 @@ public class GitContext {
     private static Path root;
 
     public static void setRoot() {
-        var currentDir = Path.of(System.getProperty("user.dir"));
-        while (currentDir != null) {
-            if (Files.exists(currentDir.resolve(GIT_DIR))) {
-                root = currentDir;
+        root = Path.of(System.getProperty("user.dir"));
+        while (root != null) {
+            if (Files.exists(root.resolve(GIT_DIR))) {
                 return;
             }
-            currentDir = currentDir.getParent();
+            root = root.getParent();
         }
     }
 
@@ -24,11 +23,7 @@ public class GitContext {
     }
 
     public static Path gitDir() {
-        return gitDir(false);
-    }
-
-    public static Path gitDir(boolean allowMissing) {
-        if (!allowMissing && root == null) {
+        if (root == null) {
             throw new RuntimeException("Not in ugit repository");
         }
         return root.resolve(GIT_DIR);

@@ -18,7 +18,7 @@ public class Data {
     private static final byte NULL_BYTE = 0x00;
 
     public static void init() throws IOException {
-        Path gitDir = GitContext.gitDir(true);
+        Path gitDir = Path.of(System.getProperty("user.dir")).resolve(GitContext.GIT_DIR);
         Path objectsPath = gitDir.resolve("objects");
         Files.createDirectory(gitDir);
         Files.createDirectory(objectsPath);
