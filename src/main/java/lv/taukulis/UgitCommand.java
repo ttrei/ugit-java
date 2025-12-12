@@ -14,7 +14,8 @@ import java.util.stream.Collectors;
 
 @Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class,
         InitCommand.class, HashObjectCommand.class, CatFilesCommand.class, WriteTreeCommand.class,
-        ReadTreeCommand.class, CommitCommand.class, LogCommand.class, CheckoutCommand.class, TagCommand.class})
+        ReadTreeCommand.class, CommitCommand.class, LogCommand.class, CheckoutCommand.class, TagCommand.class,
+        KCommand.class})
 public class UgitCommand {
     @SuppressWarnings("unused")
     @Spec
@@ -144,6 +145,15 @@ class TagCommand implements Callable<Integer> {
     @Override
     public Integer call() throws IOException {
         Base.tag(name, Data.resolveCommitId(ref));
+        return 0;
+    }
+}
+
+@Command(name = "k", mixinStandardHelpOptions = true)
+class KCommand implements Callable<Integer> {
+    @Override
+    public Integer call() {
+        Data.iterRefs().forEach(System.out::println);
         return 0;
     }
 }

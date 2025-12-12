@@ -5,9 +5,12 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -115,6 +118,14 @@ public class Data {
         }
         // SHA-1 is exactly 40 hexadecimal characters
         return input.matches("[a-fA-F0-9]{40}");
+    }
+
+    public static Iterable<Path> iterRefs() {
+        try (var stream = Files.walk(GitContext.gitDir().resolve("refs"))) {
+            return stream.filter(Files::isRegularFile).toList();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
