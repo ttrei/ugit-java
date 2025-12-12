@@ -2,14 +2,18 @@ package lv.taukulis;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DataTest {
 
@@ -56,18 +60,17 @@ class DataTest {
     @Test
     void testUpdateRefAndGetRef() throws IOException {
         Data.init();
-        String ref = "refs/heads/main";
-        String commitId = "abc123";
-        Data.updateRef(ref, commitId);
-        Optional<String> retrieved = Data.getRef(ref);
+        var ref = new Data.Ref("refs/heads/main", "abc123");
+        Data.updateRef(Data.Ref.of(ref.name(), ref.commitId()));
+        Optional<Data.Ref> retrieved = Data.Ref.fromName(ref.name());
         assertTrue(retrieved.isPresent());
-        assertEquals(commitId, retrieved.get());
+        assertEquals(ref.commitId(), retrieved.get());
     }
 
     @Test
     void testGetRefNonExistent() throws IOException {
         Data.init();
-        Optional<String> retrieved = Data.getRef("nonexistent");
+        Optional<Data.Ref> retrieved = Data.Ref.fromName("nonexistent");
         assertFalse(retrieved.isPresent());
     }
 }

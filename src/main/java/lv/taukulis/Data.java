@@ -5,12 +5,9 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -82,28 +79,18 @@ public class Data {
         return dataBytes;
     }
 
-    public static void updateRef(String ref, String commitId) throws IOException {
-        Path path = GitContext.gitDir().resolve(ref);
+    public static void updateRef(Ref ref) throws IOException {
+        Path path = GitContext.gitDir().resolve(ref.name);
         Files.createDirectories(path.getParent());
-        Files.write(path, (commitId + "\n").getBytes());
-    }
-
-    public static Optional<String> getRef(String ref) {
-        try {
-            Path file = GitContext.gitDir().resolve("@".equals(ref) ? HEAD : ref);
-            return Optional.of(Files.readString(file).strip());
-        } catch (NoSuchFileException e) {
-            return Optional.empty();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        Files.write(path, (ref.commitId + "\n").getBytes());
     }
 
     public static String resolveCommitId(String name) {
         return Stream.of(name, "refs/" + name, "refs/tags/" + name, "refs/heads/" + name)
-                .map(Data::getRef)
+                .map(Data.Ref::fromName)
                 .flatMap(Optional::stream)
                 .findFirst()
+                .map(Data.Ref::commitId)
                 .orElseGet(() -> {
                     if (isSha1Hash(name)) {
                         return name;
@@ -120,12 +107,41 @@ public class Data {
         return input.matches("[a-fA-F0-9]{40}");
     }
 
-    public static Iterable<Path> iterRefs() {
+    public static Iterable<Ref> iterRefs() {
         try (var stream = Files.walk(GitContext.gitDir().resolve("refs"))) {
-            return stream.filter(Files::isRegularFile).toList();
+            return stream.filter(Files::isRegularFile).map(Ref::fromPath).toList();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    // name - path of the ref relative to gitDir
+    public record Ref(String name, String commitId) {
+
+        public static Ref of(String name, String commitId) {
+            return new Ref(name, commitId);
+        }
+
+        public static Optional<Ref> fromName(String name) {
+            name = "@".equals(name) ? HEAD : name;
+            Path file = GitContext.gitDir().resolve(name);
+            try {
+                return Optional.of(new Ref(name, Files.readString(file).strip()));
+            } catch (NoSuchFileException e) {
+                return Optional.empty();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static Ref fromPath(Path path) {
+            try {
+                return new Ref(GitContext.gitDir().relativize(path).toString(), Files.readString(path).strip());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
     }
 
 }
