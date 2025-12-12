@@ -78,7 +78,7 @@ public class Base {
     public static void readTree(String treeId) throws IOException {
         var tree = Tree.fromId(treeId);
         Map<Path, String> blobs = tree.getAllBlobs(GitContext.rootDir());
-        String headCommitId = Data.Ref.fromName(HEAD).map(Data.Ref::commitId).orElse(null);
+        String headCommitId = Data.Ref.read(HEAD).map(Data.Ref::commitId).orElse(null);
         if (headCommitId != null) {
             unreadTree(Commit.fromId(headCommitId).treeId);
         }
@@ -92,7 +92,7 @@ public class Base {
 
     public static String commit(String message) throws IOException {
         String treeObjectId = writeTree("");
-        String parentCommitId = Data.Ref.fromName(HEAD).map(Data.Ref::commitId).orElse(null);
+        String parentCommitId = Data.Ref.read(HEAD).map(Data.Ref::commitId).orElse(null);
         var commitObject = new Commit(treeObjectId, parentCommitId, message);
         String commitObjectId = Data.hashObject(commitObject.toString().getBytes(), ObjectType.COMMIT);
         Data.updateRef(Data.Ref.of(HEAD, commitObjectId));

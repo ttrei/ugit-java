@@ -87,7 +87,7 @@ public class Data {
 
     public static String resolveCommitId(String name) {
         return Stream.of(name, "refs/" + name, "refs/tags/" + name, "refs/heads/" + name)
-                .map(Data.Ref::fromName)
+                .map(Data.Ref::read)
                 .flatMap(Optional::stream)
                 .findFirst()
                 .map(Data.Ref::commitId)
@@ -109,7 +109,7 @@ public class Data {
 
     public static Iterable<Ref> iterRefs() {
         try (var stream = Files.walk(GitContext.gitDir().resolve("refs"))) {
-            return stream.filter(Files::isRegularFile).map(Ref::fromPath).toList();
+            return stream.filter(Files::isRegularFile).map(Ref::read).flatMap(Optional::stream).toList();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -122,21 +122,16 @@ public class Data {
             return new Ref(name, commitId);
         }
 
-        public static Optional<Ref> fromName(String name) {
+        public static Optional<Ref> read(String name) {
             name = "@".equals(name) ? HEAD : name;
-            Path file = GitContext.gitDir().resolve(name);
-            try {
-                return Optional.of(new Ref(name, Files.readString(file).strip()));
-            } catch (NoSuchFileException e) {
-                return Optional.empty();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            return read(GitContext.gitDir().resolve(name));
         }
 
-        public static Ref fromPath(Path path) {
+        public static Optional<Ref> read(Path path) {
             try {
-                return new Ref(GitContext.gitDir().relativize(path).toString(), Files.readString(path).strip());
+                return Optional.of(new Ref(GitContext.gitDir().relativize(path).toString(), Files.readString(path).strip()));
+            } catch (NoSuchFileException e) {
+                return Optional.empty();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

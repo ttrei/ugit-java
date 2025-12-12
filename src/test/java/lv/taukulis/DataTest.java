@@ -62,7 +62,7 @@ class DataTest {
         Data.init();
         var ref = new Data.Ref("refs/heads/main", "abc123");
         Data.updateRef(Data.Ref.of(ref.name(), ref.commitId()));
-        Optional<Data.Ref> retrieved = Data.Ref.fromName(ref.name());
+        Optional<Data.Ref> retrieved = Data.Ref.read(ref.name());
         assertTrue(retrieved.isPresent());
         assertEquals(ref.commitId(), retrieved.get());
     }
@@ -70,7 +70,7 @@ class DataTest {
     @Test
     void testGetRefNonExistent() throws IOException {
         Data.init();
-        Optional<Data.Ref> retrieved = Data.Ref.fromName("nonexistent");
+        Optional<Data.Ref> retrieved = Data.Ref.read("nonexistent");
         assertFalse(retrieved.isPresent());
     }
 }
