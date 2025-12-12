@@ -12,7 +12,10 @@
   in
   {
     devShells.${system}.default = pkgs.mkShell {
-      buildInputs = [ pkgs.gradle ];
+      buildInputs = with pkgs; [
+        gradle
+        micronaut
+      ];
     };
   };
 }
