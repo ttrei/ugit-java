@@ -21,14 +21,10 @@ public class UgitCommand {
     @Spec
     CommandSpec spec;
 
-    @Option(names = {"-r", "--root"}, description = "Root directory of ugit repository")
-    Path root;
-
     public static void main(String[] args) {
         var cmd = new CommandLine(new UgitCommand());
         cmd.setExecutionStrategy((parseResult) -> {
-            UgitCommand microGit = (UgitCommand) parseResult.commandSpec().userObject();
-            GitContext.setRoot(microGit.root);
+            GitContext.setRoot();
             return new CommandLine.RunLast().execute(parseResult);
         });
         int exitCode = cmd.execute(args);

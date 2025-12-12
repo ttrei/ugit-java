@@ -13,12 +13,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class DataTest {
 
-    @TempDir
-    Path tempDir;
-
     @BeforeEach
     void setUp() {
-        GitContext.setRoot(tempDir);
+        GitContext.setRoot();
     }
 
     @Test
