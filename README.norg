@@ -4,6 +4,11 @@
 
 ** Java Libraries
 
-   CLI:
+   *CLI*
    https://picocli.info/quick-guide.html
+
+   *Framework*
+   https://docs.micronaut.io
+   https://gradleup.com/shadow/
+
    NOTE: Don't use GraalVM - it's complicated to setup and compilation is slow.
