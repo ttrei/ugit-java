@@ -171,7 +171,7 @@ class KCommand implements Callable<Integer> {
                 dot.append(quoted(commitId)).append(" -> ").append(quoted(commit.parentId())).append("\n");
             }
         });
-        dot.append("}\n");
+        dot.append("}");
         System.out.println(dot);
         return 0;
     }
