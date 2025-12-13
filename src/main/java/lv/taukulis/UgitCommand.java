@@ -156,18 +156,27 @@ class TagCommand implements Callable<Integer> {
 class KCommand implements Callable<Integer> {
     @Override
     public Integer call() throws IOException {
+        final StringBuilder dot = new StringBuilder("digraph commits {\n");
         Set<String> commitIds = new LinkedHashSet<>();
         Ref.getAll().forEach(ref -> {
-            System.out.println(ref);
+            dot.append(quoted(ref.name)).append(" [shape=note]\n");
+            dot.append(quoted(ref.name)).append(" -> ").append(quoted(ref.commitId)).append("\n");
             commitIds.add(ref.commitId);
         });
         Map<String, Base.Commit> reachable = Base.getReachableCommits(commitIds);
         reachable.forEach((commitId, commit) -> {
-            System.out.println(commitId);
+            dot.append(quoted(commitId)).append(" [shape=box style=filled label=");
+            dot.append(quoted(commitId.substring(0 , 10))).append("]\n");
             if (commit.parentId() != null) {
-                System.out.println("Parent " + commit.parentId());
+                dot.append(quoted(commitId)).append(" -> ").append(quoted(commit.parentId())).append("\n");
             }
         });
+        dot.append("}\n");
+        System.out.println(dot);
         return 0;
+    }
+
+    private String quoted(String s) {
+        return "\"" + s + "\"";
     }
 }
