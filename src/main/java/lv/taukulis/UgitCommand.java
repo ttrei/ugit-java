@@ -153,7 +153,7 @@ class TagCommand implements Callable<Integer> {
 class KCommand implements Callable<Integer> {
     @Override
     public Integer call() {
-        for (Ref ref : Ref.iterRefs()) {
+        for (Ref ref : Ref.getAll()) {
             System.out.println(ref);
         }
         return 0;

@@ -95,7 +95,7 @@ public class Base {
         String parentCommitId = Ref.get(HEAD).map(Ref::commitId).orElse(null);
         var commitObject = new Commit(treeObjectId, parentCommitId, message);
         String commitObjectId = Data.hashObject(commitObject.toString().getBytes(), ObjectType.COMMIT);
-        Ref.update(Ref.of(HEAD, commitObjectId));
+        Ref.update(HEAD, commitObjectId);
         return commitObjectId;
     }
 
@@ -106,11 +106,11 @@ public class Base {
     public static void checkout(String commitId) throws IOException {
         Commit commit = getCommit(commitId);
         readTree(commit.treeId);
-        Ref.update(Ref.of(HEAD, commitId));
+        Ref.update(HEAD, commitId);
     }
 
     public static void tag(String name, String commitId) throws IOException {
-        Ref.update(Ref.of(Ref.TAGS + name, commitId));
+        Ref.update(Ref.TAGS + name, commitId);
     }
 
     /**

@@ -13,24 +13,19 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 
-// name - path of the ref relative to gitDir
 @AllArgsConstructor
 @Accessors(fluent = true)
 @Getter
 @ToString
 public class Ref {
 
-    String name;
+    String name; // path of the ref relative to gitDir
     String commitId;
 
     public static final String HEAD = "HEAD";
     public static final String REFS = "refs/";
     public static final String TAGS = "refs/tags/";
     public static final String HEADS = "refs/heads/";
-
-    public static Ref of(String name, String commitId) {
-        return new Ref(name, commitId);
-    }
 
     public static Optional<Ref> get(String name) {
         return get(resolve(name));
@@ -46,7 +41,7 @@ public class Ref {
         }
     }
 
-    public static Iterable<Ref> iterRefs() {
+    public static Iterable<Ref> getAll() {
         try (var stream = Files.walk(GitContext.gitDir().resolve(REFS))) {
             return stream.filter(Files::isRegularFile).map(Ref::get).flatMap(Optional::stream).toList();
         } catch (IOException e) {
@@ -62,10 +57,10 @@ public class Ref {
     }
 
 
-    public static void update(Ref ref) throws IOException {
-        Path path = GitContext.gitDir().resolve(ref.name);
+    public static void update(String name, String commitId) throws IOException {
+        Path path = GitContext.gitDir().resolve(name);
         Files.createDirectories(path.getParent());
-        Files.write(path, (ref.commitId + "\n").getBytes());
+        Files.write(path, (commitId + "\n").getBytes());
     }
 
     private static Path resolve(String name) {
