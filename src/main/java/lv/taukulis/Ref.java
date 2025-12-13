@@ -28,12 +28,15 @@ public class Ref {
         return new Ref(name, commitId);
     }
 
-    public static Optional<Ref> read(String name) {
-        name = "@".equals(name) ? HEAD : name;
-        return read(GitContext.gitDir().resolve(name));
+    public static Path resolve(String name) {
+        return GitContext.gitDir().resolve("@".equals(name) ? HEAD : name);
     }
 
-    public static Optional<Ref> read(Path path) {
+    public static Optional<Ref> get(String name) {
+        return get(resolve(name));
+    }
+
+    public static Optional<Ref> get(Path path) {
         try {
             return Optional.of(new Ref(GitContext.gitDir().relativize(path).toString(), Files.readString(path).strip()));
         } catch (NoSuchFileException e) {
@@ -45,7 +48,7 @@ public class Ref {
 
     public static Iterable<Ref> iterRefs() {
         try (var stream = Files.walk(GitContext.gitDir().resolve("refs"))) {
-            return stream.filter(Files::isRegularFile).map(Ref::read).flatMap(Optional::stream).toList();
+            return stream.filter(Files::isRegularFile).map(Ref::get).flatMap(Optional::stream).toList();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -84,7 +84,7 @@ public class Data {
 
     public static String resolveCommitId(String name) {
         return Stream.of(name, "refs/" + name, "refs/tags/" + name, "refs/heads/" + name)
-                .map(Ref::read)
+                .map(Ref::get)
                 .flatMap(Optional::stream)
                 .findFirst()
                 .map(Ref::commitId)
