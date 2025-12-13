@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -111,6 +112,26 @@ public class Base {
 
     public static void tag(String name, String commitId) throws IOException {
         Ref.update(Ref.TAGS + name, commitId);
+    }
+
+    public static Map<String, Commit> getReachableCommits(Iterable<String> startingCommitIds) throws IOException {
+        Map<String, Commit> reachable = new LinkedHashMap<>();
+        List<String> toVisit = new ArrayList<>();
+        startingCommitIds.forEach(toVisit::add);
+        Set<String> visited = new HashSet<>();
+        while (!toVisit.isEmpty()) {
+            String commitId = toVisit.removeFirst();
+            if (visited.contains(commitId)) {
+                continue;
+            }
+            visited.add(commitId);
+            Commit commit = getCommit(commitId);
+            reachable.put(commitId, commit);
+            if (commit.parentId != null) {
+                toVisit.add(commit.parentId);
+            }
+        }
+        return reachable;
     }
 
     /**

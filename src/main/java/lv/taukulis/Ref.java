@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -41,7 +42,7 @@ public class Ref {
         }
     }
 
-    public static Iterable<Ref> getAll() {
+    public static List<Ref> getAll() {
         try (var stream = Files.walk(GitContext.gitDir().resolve(REFS))) {
             return stream.filter(Files::isRegularFile).map(Ref::get).flatMap(Optional::stream).toList();
         } catch (IOException e) {

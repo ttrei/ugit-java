@@ -9,6 +9,9 @@ import picocli.CommandLine.Spec;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -152,10 +155,19 @@ class TagCommand implements Callable<Integer> {
 @Command(name = "k", mixinStandardHelpOptions = true)
 class KCommand implements Callable<Integer> {
     @Override
-    public Integer call() {
-        for (Ref ref : Ref.getAll()) {
+    public Integer call() throws IOException {
+        Set<String> commitIds = new LinkedHashSet<>();
+        Ref.getAll().forEach(ref -> {
             System.out.println(ref);
-        }
+            commitIds.add(ref.commitId);
+        });
+        Map<String, Base.Commit> reachable = Base.getReachableCommits(commitIds);
+        reachable.forEach((commitId, commit) -> {
+            System.out.println(commitId);
+            if (commit.parentId() != null) {
+                System.out.println("Parent " + commit.parentId());
+            }
+        });
         return 0;
     }
 }
