@@ -60,11 +60,11 @@ class DataTest {
     @Test
     void testUpdateRefAndGetRef() throws IOException {
         Data.init();
-        var ref = new Ref("refs/heads/main", "abc123");
-        Data.updateRef(Ref.of(ref.name(), ref.commitId()));
+        var ref = new Ref(Ref.HEADS + "main", "abc123");
+        Ref.update(Ref.of(ref.name(), ref.commitId()));
         Optional<Ref> retrieved = Ref.get(ref.name());
         assertTrue(retrieved.isPresent());
-        assertEquals(ref.commitId(), retrieved.get());
+        assertEquals(ref, retrieved.get());
     }
 
     @Test

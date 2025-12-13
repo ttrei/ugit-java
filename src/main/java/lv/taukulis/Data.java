@@ -7,8 +7,6 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 public class Data {
 
@@ -76,18 +74,8 @@ public class Data {
         return dataBytes;
     }
 
-    public static void updateRef(Ref ref) throws IOException {
-        Path path = GitContext.gitDir().resolve(ref.name);
-        Files.createDirectories(path.getParent());
-        Files.write(path, (ref.commitId + "\n").getBytes());
-    }
-
     public static String resolveCommitId(String name) {
-        return Stream.of(name, "refs/" + name, "refs/tags/" + name, "refs/heads/" + name)
-                .map(Ref::get)
-                .flatMap(Optional::stream)
-                .findFirst()
-                .map(Ref::commitId)
+        return Ref.find(name).map(Ref::commitId)
                 .orElseGet(() -> {
                     if (isSha1Hash(name)) {
                         return name;
