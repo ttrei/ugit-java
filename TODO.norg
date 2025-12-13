@@ -4,17 +4,13 @@
 
 ** Current chapter
 
-   https://www.leshenko.net/p/ugit/#k-iterate-commits
+   https://www.leshenko.net/p/ugit/#log-generic-iteration
 
 ** Review unittests, write new ones
 
-** Create a simple integration test - shell script
-
-   Test only the happy path.
-   ~ Create temp directory.
-   ~ Initialize repo.
-   ~ Create files/directories.
-   ~ etc
+   Write integration tests using the unittest framework.
+   See lv.taukulis.UgitCommandTest.
+   The test should create a new repository in a temporary directory.
 
 ** (nice to have) Proper error presentation for cli user
 
