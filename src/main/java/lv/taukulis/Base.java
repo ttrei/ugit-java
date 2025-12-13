@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.StreamSupport;
 
-import static lv.taukulis.Data.HEAD;
+import static lv.taukulis.Ref.HEAD;
 
 public class Base {
 
@@ -78,7 +78,7 @@ public class Base {
     public static void readTree(String treeId) throws IOException {
         var tree = Tree.fromId(treeId);
         Map<Path, String> blobs = tree.getAllBlobs(GitContext.rootDir());
-        String headCommitId = Data.Ref.read(HEAD).map(Data.Ref::commitId).orElse(null);
+        String headCommitId = Ref.read(HEAD).map(Ref::commitId).orElse(null);
         if (headCommitId != null) {
             unreadTree(Commit.fromId(headCommitId).treeId);
         }
@@ -92,10 +92,10 @@ public class Base {
 
     public static String commit(String message) throws IOException {
         String treeObjectId = writeTree("");
-        String parentCommitId = Data.Ref.read(HEAD).map(Data.Ref::commitId).orElse(null);
+        String parentCommitId = Ref.read(HEAD).map(Ref::commitId).orElse(null);
         var commitObject = new Commit(treeObjectId, parentCommitId, message);
         String commitObjectId = Data.hashObject(commitObject.toString().getBytes(), ObjectType.COMMIT);
-        Data.updateRef(Data.Ref.of(HEAD, commitObjectId));
+        Data.updateRef(Ref.of(HEAD, commitObjectId));
         return commitObjectId;
     }
 
@@ -106,11 +106,11 @@ public class Base {
     public static void checkout(String commitId) throws IOException {
         Commit commit = getCommit(commitId);
         readTree(commit.treeId);
-        Data.updateRef(Data.Ref.of(HEAD, commitId));
+        Data.updateRef(Ref.of(HEAD, commitId));
     }
 
     public static void tag(String name, String commitId) throws IOException {
-        Data.updateRef(Data.Ref.of("refs/tags/" + name, commitId));
+        Data.updateRef(Ref.of("refs/tags/" + name, commitId));
     }
 
     /**

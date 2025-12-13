@@ -1,6 +1,7 @@
 plugins {
     id("io.micronaut.application") version "4.6.0"
     id("com.gradleup.shadow") version "8.3.9"
+    id("io.freefair.lombok") version "8.14.3"
 }
 
 version = "0.1"

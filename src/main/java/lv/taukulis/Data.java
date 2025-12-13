@@ -3,7 +3,6 @@ package lv.taukulis;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -12,8 +11,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public class Data {
-
-    public static final String HEAD = "HEAD";
 
     private static final byte NULL_BYTE = 0x00;
 
@@ -87,10 +84,10 @@ public class Data {
 
     public static String resolveCommitId(String name) {
         return Stream.of(name, "refs/" + name, "refs/tags/" + name, "refs/heads/" + name)
-                .map(Data.Ref::read)
+                .map(Ref::read)
                 .flatMap(Optional::stream)
                 .findFirst()
-                .map(Data.Ref::commitId)
+                .map(Ref::commitId)
                 .orElseGet(() -> {
                     if (isSha1Hash(name)) {
                         return name;
@@ -105,38 +102,6 @@ public class Data {
         }
         // SHA-1 is exactly 40 hexadecimal characters
         return input.matches("[a-fA-F0-9]{40}");
-    }
-
-    public static Iterable<Ref> iterRefs() {
-        try (var stream = Files.walk(GitContext.gitDir().resolve("refs"))) {
-            return stream.filter(Files::isRegularFile).map(Ref::read).flatMap(Optional::stream).toList();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    // name - path of the ref relative to gitDir
-    public record Ref(String name, String commitId) {
-
-        public static Ref of(String name, String commitId) {
-            return new Ref(name, commitId);
-        }
-
-        public static Optional<Ref> read(String name) {
-            name = "@".equals(name) ? HEAD : name;
-            return read(GitContext.gitDir().resolve(name));
-        }
-
-        public static Optional<Ref> read(Path path) {
-            try {
-                return Optional.of(new Ref(GitContext.gitDir().relativize(path).toString(), Files.readString(path).strip()));
-            } catch (NoSuchFileException e) {
-                return Optional.empty();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
     }
 
 }
