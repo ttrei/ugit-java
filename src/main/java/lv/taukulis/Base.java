@@ -93,10 +93,10 @@ public class Base {
     public static String commit(String message) throws IOException {
         String treeObjectId = writeTree("");
         String parentCommitId = Ref.get(HEAD).map(Ref::commitId).orElse(null);
-        var commitObject = new Commit(treeObjectId, parentCommitId, message);
-        String commitObjectId = Data.hashObject(commitObject.toString().getBytes(), ObjectType.COMMIT);
-        Ref.update(HEAD, commitObjectId);
-        return commitObjectId;
+        var commit = new Commit(treeObjectId, parentCommitId, message);
+        String commitId = Data.hashObject(commit.toString().getBytes(), ObjectType.COMMIT);
+        Ref.update(HEAD, commitId);
+        return commitId;
     }
 
     public static Commit getCommit(String commitId) throws IOException {
