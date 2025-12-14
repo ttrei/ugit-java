@@ -115,6 +115,10 @@ public class Base {
         Ref.update(Ref.TAGS + name, commitId);
     }
 
+    public static void createBranch(String name, String commitId) throws IOException {
+        Ref.update(Ref.HEADS + name, commitId);
+    }
+
     public static SequencedMap<String, Commit> getReachableCommits(Iterable<String> startingCommitIds) throws IOException {
         SequencedMap<String, Commit> reachable = new LinkedHashMap<>();
         List<String> toVisit = new ArrayList<>();

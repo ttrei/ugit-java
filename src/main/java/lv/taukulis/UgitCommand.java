@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.SequencedMap;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -19,7 +18,7 @@ import java.util.stream.Collectors;
 @Command(name = "ugit", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class,
         InitCommand.class, HashObjectCommand.class, CatFilesCommand.class, WriteTreeCommand.class,
         ReadTreeCommand.class, CommitCommand.class, LogCommand.class, CheckoutCommand.class, TagCommand.class,
-        KCommand.class})
+        BranchCommand.class, KCommand.class})
 public class UgitCommand {
     @SuppressWarnings("unused")
     @Spec
@@ -151,6 +150,21 @@ class TagCommand implements Callable<Integer> {
     }
 }
 
+@Command(name = "branch", mixinStandardHelpOptions = true)
+class BranchCommand implements Callable<Integer> {
+    @Parameters(index = "0", description = "Branch name")
+    String name;
+
+    @Parameters(index = "1", defaultValue = "@", description = "Commit reference")
+    String ref;
+
+    @Override
+    public Integer call() throws IOException {
+        Base.createBranch(name, Data.resolveCommitId(ref));
+        return 0;
+    }
+}
+
 @Command(name = "k", mixinStandardHelpOptions = true)
 class KCommand implements Callable<Integer> {
     @Override
@@ -165,7 +179,7 @@ class KCommand implements Callable<Integer> {
         SequencedMap<String, Base.Commit> reachable = Base.getReachableCommits(commitIds);
         reachable.forEach((commitId, commit) -> {
             dot.append(quoted(commitId)).append(" [shape=box style=filled label=");
-            dot.append(quoted(commitId.substring(0 , 10))).append("]\n");
+            dot.append(quoted(commitId.substring(0, 10))).append("]\n");
             if (commit.parentId() != null) {
                 dot.append(quoted(commitId)).append(" -> ").append(quoted(commit.parentId())).append("\n");
             }
