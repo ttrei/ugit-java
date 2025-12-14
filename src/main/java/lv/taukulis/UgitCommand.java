@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.SequencedMap;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -109,9 +110,8 @@ class LogCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        String commitId = Data.resolveCommitId(ref);
-        while (commitId != null) {
-            Base.Commit commit = Base.getCommit(commitId);
+        Set<String> startingCommitIds = Set.of(Data.resolveCommitId(ref));
+        Base.getReachableCommits(startingCommitIds).forEach((commitId, commit) -> {
             System.out.println("commit " + commitId);
             if (commit.message() != null) {
                 String indentedMessage = commit.message().lines()
@@ -119,8 +119,7 @@ class LogCommand implements Callable<Integer> {
                         .collect(Collectors.joining("\n"));
                 System.out.println(indentedMessage);
             }
-            commitId = commit.parentId();
-        }
+        });
         return 0;
     }
 }
@@ -163,7 +162,7 @@ class KCommand implements Callable<Integer> {
             dot.append(quoted(ref.name)).append(" -> ").append(quoted(ref.commitId)).append("\n");
             commitIds.add(ref.commitId);
         });
-        Map<String, Base.Commit> reachable = Base.getReachableCommits(commitIds);
+        SequencedMap<String, Base.Commit> reachable = Base.getReachableCommits(commitIds);
         reachable.forEach((commitId, commit) -> {
             dot.append(quoted(commitId)).append(" [shape=box style=filled label=");
             dot.append(quoted(commitId.substring(0 , 10))).append("]\n");
