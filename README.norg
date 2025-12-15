@@ -6,11 +6,23 @@
 
    @code
    ./build.sh
-   ./run.sh
+   ./install.sh
+   ugit -h
+   @end
 
-   # "install" the "binary"
-   cp bin/ugit ~/bin/
-   ugit
+** gradle2nix
+
+   https://github.com/tadfisher/gradle2nix/tree/v2
+   https://discourse.nixos.org/t/gradle2nix-v2-call-for-testers/46199
+
+   Re-generate gradle.lock
+   @code
+   nix run github:tadfisher/gradle2nix/v2
+   @end
+
+   Build
+   @code
+   nix build
    @end
 
 ** Java Libraries
