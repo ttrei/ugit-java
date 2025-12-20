@@ -9,7 +9,7 @@
       pkgs = nixpkgs.legacyPackages.${system};
     in {
 
-      devShells.default = pkgs.mkShell {
+      devShells.${system}.default = pkgs.mkShell {
         buildInputs = with pkgs; [
           jdk21
           gradle
